@@ -79,6 +79,7 @@ int main()
 	if (node)
 	{
 		node->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+		node->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		node->setMD2Animation(irr::scene::EMAT_STAND);
 		node->setMaterialTexture(0, driver->getTexture("../../Bin/Meshes/sydney.bmp"));
 	}
@@ -99,15 +100,20 @@ int main()
 
 	smgr->addCameraSceneNodeFPS(0, 100, 500, -1, keymap, 4);
 
-	while(device->run() && device->isWindowFocused()) {
-		
+	while(device->run()) {
+		if (device->isWindowActive()) {
+			driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
+
+			smgr->drawAll();
+			guienv->drawAll();
+
+			driver->endScene();
+		}
+		else {
+			device->yield();
+		}
 		//node->setPosition(pos);
-		driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
-
-		smgr->drawAll();
-		guienv->drawAll();
-
-		driver->endScene();		
+			
 	}
 
 	device->drop();
