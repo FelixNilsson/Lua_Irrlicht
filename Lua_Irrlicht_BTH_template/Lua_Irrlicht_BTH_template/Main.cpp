@@ -64,6 +64,7 @@ int main()
 	irr::video::IVideoDriver* driver	= device->getVideoDriver();
 	irr::scene::ISceneManager* smgr		= device->getSceneManager();
 	irr::gui::IGUIEnvironment* guienv	= device->getGUIEnvironment();
+	
 
 	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
 
@@ -82,12 +83,25 @@ int main()
 		node->setMaterialTexture(0, driver->getTexture("../../Bin/Meshes/sydney.bmp"));
 	}
 	
-	smgr->addCameraSceneNode(0, irr::core::vector3df(0, 30, -40), irr::core::vector3df(0, 5, 0));
+	//smgr->addCameraSceneNode(0, irr::core::vector3df(0, 30, -40), irr::core::vector3df(0, 5, 0));
+	
 	//end mesh stuff
 	
-	while(device->run()) {
+	irr::SKeyMap keymap[4];
+	keymap[0].Action = irr::EKA_MOVE_FORWARD;
+	keymap[0].KeyCode = irr::KEY_KEY_W;
+	keymap[1].Action = irr::EKA_MOVE_BACKWARD;
+	keymap[1].KeyCode = irr::KEY_KEY_S;
+	keymap[2].Action = irr::EKA_STRAFE_LEFT;
+	keymap[2].KeyCode = irr::KEY_KEY_A;
+	keymap[3].Action = irr::EKA_STRAFE_RIGHT;
+	keymap[3].KeyCode = irr::KEY_KEY_D;
+
+	smgr->addCameraSceneNodeFPS(0, 100, 500, -1, keymap, 4);
+
+	while(device->run() && device->isWindowFocused()) {
 		
-		node->setPosition(pos);
+		//node->setPosition(pos);
 		driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
 
 		smgr->drawAll();
