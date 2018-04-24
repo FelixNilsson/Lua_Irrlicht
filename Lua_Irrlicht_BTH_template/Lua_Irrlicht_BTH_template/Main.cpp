@@ -98,9 +98,10 @@ int main()
 	keymap[3].Action = irr::EKA_STRAFE_RIGHT;
 	keymap[3].KeyCode = irr::KEY_KEY_D;
 
-	smgr->addCameraSceneNodeFPS(0, 100, 500, -1, keymap, 4);
-
+	smgr->addCameraSceneNodeFPS(0, 100, 0.5, -1, keymap, 4);
+	
 	while(device->run()) {
+		//smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
 		if (device->isWindowActive()) {
 			driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
 
