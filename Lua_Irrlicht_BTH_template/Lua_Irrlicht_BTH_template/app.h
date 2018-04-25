@@ -2,16 +2,22 @@
 
 #include <lua.hpp>
 #include <irrlicht.h>
+#include <vector>
 
 class App {
 private:
 	lua_State * L;
 
-	irr::IrrlichtDevice* device;
-	irr::video::IVideoDriver* driver;
-	irr::gui::IGUIEnvironment* guienv;
+	irr::IrrlichtDevice* m_device;
+	irr::video::IVideoDriver* m_driver;
+	irr::gui::IGUIEnvironment* m_guienv;
+	
 public:
-	static irr::scene::ISceneManager* smgr;
+	static irr::scene::ISceneManager* m_smgr;
+	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
+private:
+	static bool isNumber(int push, lua_State * L, float *number);
+public:
 	App();
 	~App();
 	bool run();

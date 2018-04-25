@@ -1,20 +1,36 @@
 #include "app.h"
+#include <iostream>
 
-irr::scene::ISceneManager* App::smgr = nullptr;
+irr::scene::ISceneManager* App::m_smgr = nullptr;
+std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
+
+bool App::isNumber(int push, lua_State * L, float *number)
+{
+	bool isNR = false;
+	lua_pushnumber(L, push);
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		*number = lua_tonumber(L, -1);
+		isNR = true;
+	}
+	int i = lua_istable(L, -2);
+	lua_pop(L, 1);
+	return isNR;
+}
 
 App::App()
 {
-	this->device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
+	m_device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
 
-	if (!device) {
+	if (!m_device) {
 		//error
 	}
-	device->setWindowCaption(L"Hello World! - Irrlicht Engine Demo");
-	this->driver = this->device->getVideoDriver();
-	this->guienv = this->device->getGUIEnvironment();
-	smgr = this->device->getSceneManager();
+	m_device->setWindowCaption(L"Hello World! - Irrlicht Engine Demo");
+	m_driver = m_device->getVideoDriver();
+	m_guienv = m_device->getGUIEnvironment();
+	m_smgr = m_device->getSceneManager();
 
-	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
+	m_guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
 
 	irr::SKeyMap keymap[4];
 	keymap[0].Action = irr::EKA_MOVE_FORWARD;
@@ -26,7 +42,7 @@ App::App()
 	keymap[3].Action = irr::EKA_STRAFE_RIGHT;
 	keymap[3].KeyCode = irr::KEY_KEY_D;
 
-	smgr->addCameraSceneNodeFPS(0, 100, 0.5, -1, keymap, 4);
+	m_smgr->addCameraSceneNodeFPS(0, 100, 0.5, -1, keymap, 4);
 
 	this->L = luaL_newstate();
 	luaL_openlibs(this->L);
@@ -42,30 +58,37 @@ App::App()
 	lua_pushcfunction(this->L, snapshot);
 	lua_setglobal(this->L, "snapshot");
 	
+	m_boxes.push_back(m_smgr->addCubeSceneNode(100, 0, 1, irr::core::vector3df(0, 0, 0), irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
+	m_boxes.operator[](0)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+	m_boxes.operator[](0)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
+
+	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 30));
 }
 
 App::~App()
 {
-	this->device->drop();
+	m_device->drop();
 }
 
 bool App::run()
 {
-	return this->device->run();
+	return m_device->run();
 }
 
 void App::draw()
 {
-	if (this->device->isWindowActive()) {
-		this->driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
+	m_smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
 
-		this->smgr->drawAll();
-		this->guienv->drawAll();
+	if (m_device->isWindowActive()) {
+		m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
 
-		this->driver->endScene();
+		m_smgr->drawAll();
+		m_guienv->drawAll();
+
+		m_driver->endScene();
 	}
 	else {
-		this->device->yield();
+		m_device->yield();
 	}
 }
 
@@ -76,11 +99,50 @@ int App::addMesh(lua_State * L)
 
 int App::addBox(lua_State * L)
 {
-	int i = lua_istable(L, 1);
-	int k = lua_gettop(L);
-	lua_gettable(L, 1);
-	int t = lua_gettop(L);
-	smgr->addCubeSceneNode();
+	irr::core::vector3df ori;
+	int size;
+	std::string name;
+	bool correct = false;
+
+	if (lua_isstring(L, -1) != 0) {
+		name = lua_tostring(L, -1);
+		lua_pop(L, 1);
+		if (lua_isnumber(L, -1)) {
+			size = lua_tonumber(L, -1);
+			lua_pop(L, 1);
+			if (lua_istable(L, -1)) {
+				/*lua_pushnumber(L, 1);
+				lua_gettable(L, -2);
+				if (lua_isnumber(L, -1))
+					ori.X = lua_tonumber(L, -1);
+				lua_pop(L, 2);*/
+				if (isNumber(1, L, &ori.X)) {
+					std::cout << "X" << std::endl;
+					if (isNumber(2, L, &ori.Y)) {
+						std::cout << "Y" << std::endl;
+						if (isNumber(3, L, &ori.Z)) {
+							std::cout << "Z" << std::endl;
+							correct = true;
+						}
+					}
+				}
+					
+				
+					
+			}
+		}
+	}
+
+	else {
+
+	}
+	
+	if (correct) {
+		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, m_boxes.size(), ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
+		//m_boxes[m_boxes.size() - 1]->setName(&name);
+	}
+	
+	
 	return 0;
 }
 
