@@ -2,6 +2,30 @@
 
 App::App()
 {
+	this->device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
+
+	if (!device) {
+		//error
+	}
+	device->setWindowCaption(L"Hello World! - Irrlicht Engine Demo");
+	this->driver = this->device->getVideoDriver();
+	this->guienv = this->device->getGUIEnvironment();
+	this->smgr = this->device->getSceneManager();
+
+	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
+
+	irr::SKeyMap keymap[4];
+	keymap[0].Action = irr::EKA_MOVE_FORWARD;
+	keymap[0].KeyCode = irr::KEY_KEY_W;
+	keymap[1].Action = irr::EKA_MOVE_BACKWARD;
+	keymap[1].KeyCode = irr::KEY_KEY_S;
+	keymap[2].Action = irr::EKA_STRAFE_LEFT;
+	keymap[2].KeyCode = irr::KEY_KEY_A;
+	keymap[3].Action = irr::EKA_STRAFE_RIGHT;
+	keymap[3].KeyCode = irr::KEY_KEY_D;
+
+	smgr->addCameraSceneNodeFPS(0, 100, 0.5, -1, keymap, 4);
+
 	this->L = luaL_newstate();
 	luaL_openlibs(this->L);
 
@@ -16,6 +40,31 @@ App::App()
 	lua_pushcfunction(this->L, snapshot);
 	lua_setglobal(this->L, "snapshot");
 	
+}
+
+App::~App()
+{
+	this->device->drop();
+}
+
+bool App::run()
+{
+	return this->device->run();
+}
+
+void App::draw()
+{
+	if (this->device->isWindowActive()) {
+		this->driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
+
+		this->smgr->drawAll();
+		this->guienv->drawAll();
+
+		this->driver->endScene();
+	}
+	else {
+		this->device->yield();
+	}
 }
 
 int App::addMesh(lua_State * L)
