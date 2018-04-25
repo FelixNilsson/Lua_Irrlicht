@@ -11,6 +11,7 @@
 #include <thread>
 #include "lua.hpp"
 #include <irrlicht.h>
+#include "app.h"
 
 void ConsoleThread(lua_State* L) {
 	char command[1000];
@@ -22,39 +23,11 @@ void ConsoleThread(lua_State* L) {
 	}
 }
 
-irr::core::vector3df pos(0, 0, 0);
-
-int updatepos(lua_State* L) {
-	pos.X += lua_tonumber(L, 1);
-	pos.Y += lua_tonumber(L, 2);
-	pos.Z += lua_tonumber(L, 3);
-	return 0;
-}
-
-int getpos(lua_State* L) {
-	lua_newtable(L);
-	lua_pushstring(L, "1");
-	lua_pushnumber(L, pos.X);
-	lua_settable(L, -3);
-	lua_pushstring(L, "2");
-	lua_pushnumber(L, pos.Y);
-	lua_settable(L, -3);
-	lua_pushstring(L, "3");
-	lua_pushnumber(L, pos.Z);
-	lua_settable(L, -3);
-	return 1;
-}
 
 int main()
 {
-	lua_State* L = luaL_newstate();
-	luaL_openlibs(L);
-	lua_pushcfunction(L, updatepos);
-	lua_setglobal(L, "updatepos");
-	lua_pushcfunction(L, getpos);
-	lua_setglobal(L, "getpos");
-
-		std::thread conThread(ConsoleThread, L);
+	App app;
+	std::thread conThread(ConsoleThread, app.getLuaState());
 
 	irr::IrrlichtDevice* device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
 	if(!device)
@@ -101,7 +74,6 @@ int main()
 	smgr->addCameraSceneNodeFPS(0, 100, 0.5, -1, keymap, 4);
 	
 	while(device->run()) {
-		//smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
 		if (device->isWindowActive()) {
 			driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
 
