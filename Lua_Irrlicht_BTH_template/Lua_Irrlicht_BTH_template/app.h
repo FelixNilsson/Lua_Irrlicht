@@ -9,9 +9,9 @@ private:
 
 	irr::IrrlichtDevice* device;
 	irr::video::IVideoDriver* driver;
-	irr::scene::ISceneManager* smgr;
 	irr::gui::IGUIEnvironment* guienv;
 public:
+	static irr::scene::ISceneManager* smgr;
 	App();
 	~App();
 	bool run();

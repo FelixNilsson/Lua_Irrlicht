@@ -1,5 +1,7 @@
 #include "app.h"
 
+irr::scene::ISceneManager* App::smgr = nullptr;
+
 App::App()
 {
 	this->device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
@@ -10,7 +12,7 @@ App::App()
 	device->setWindowCaption(L"Hello World! - Irrlicht Engine Demo");
 	this->driver = this->device->getVideoDriver();
 	this->guienv = this->device->getGUIEnvironment();
-	this->smgr = this->device->getSceneManager();
+	smgr = this->device->getSceneManager();
 
 	guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
 
@@ -74,6 +76,11 @@ int App::addMesh(lua_State * L)
 
 int App::addBox(lua_State * L)
 {
+	int i = lua_istable(L, 1);
+	int k = lua_gettop(L);
+	lua_gettable(L, 1);
+	int t = lua_gettop(L);
+	smgr->addCubeSceneNode();
 	return 0;
 }
 
