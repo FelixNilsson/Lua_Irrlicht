@@ -58,10 +58,6 @@ App::App()
 	lua_pushcfunction(this->L, snapshot);
 	lua_setglobal(this->L, "snapshot");
 	
-	m_boxes.push_back(m_smgr->addCubeSceneNode(100, 0, 1, irr::core::vector3df(0, 0, 0), irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
-	m_boxes.operator[](0)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
-	m_boxes.operator[](0)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
-
 	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 30));
 }
 
@@ -77,7 +73,7 @@ bool App::run()
 
 void App::draw()
 {
-	m_smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
+	//m_smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
 
 	if (m_device->isWindowActive()) {
 		m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
@@ -138,8 +134,11 @@ int App::addBox(lua_State * L)
 	}
 	
 	if (correct) {
-		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, m_boxes.size(), ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
+		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, 4, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
 		//m_boxes[m_boxes.size() - 1]->setName(&name);
+		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
+		std::cout << "succes" << std::endl;
 	}
 	
 	
