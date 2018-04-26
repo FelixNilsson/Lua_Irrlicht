@@ -30,7 +30,7 @@ int main()
 	std::thread conThread(ConsoleThread, app.getLuaState());
 
 	
-
+	std::cout << "I'm helping\n";
 	
 
 	//mesh stuff
