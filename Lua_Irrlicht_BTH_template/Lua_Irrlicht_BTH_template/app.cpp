@@ -152,6 +152,38 @@ int App::getNodes(lua_State * L)
 
 int App::camera(lua_State * L)
 {
+	int debug = lua_gettop(L);
+	bool isPos = false;
+	bool isTarget = false;
+	irr::core::vector3df pos;
+	irr::core::vector3df target;
+	if (lua_istable(L, -1)) {
+		if (isNumber(1, L, &target.X)) {
+			if (isNumber(2, L, &target.Y)) {
+				if (isNumber(3, L, &target.Z)) {
+					isPos = true;
+				}
+			}
+		}
+		debug = lua_gettop(L);
+		lua_pop(L, 1);
+
+		if (lua_istable(L, -1)) {
+			if (isNumber(1, L, &pos.X)) {
+				if (isNumber(2, L, &pos.Y)) {
+					if (isNumber(3, L, &pos.Z)) {
+						isTarget = true;
+					}
+				}
+			}
+		}
+		lua_pop(L, 1);
+		if (isPos && isTarget) {
+			m_smgr->getActiveCamera()->setPosition(pos);
+			m_smgr->getActiveCamera()->setTarget(target);
+			std::cout << "succes" << std::endl;
+		}
+	}
 	return 0;
 }
 
