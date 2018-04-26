@@ -1,13 +1,16 @@
 #include "app.h"
 #include <iostream>
+#include <path.h>
 
 irr::scene::ISceneManager* App::m_smgr = nullptr;
+irr::video::IVideoDriver* App::m_driver = nullptr;
 std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
 
-bool App::isNumber(int push, lua_State * L, float *number)
+
+bool App::isNumber(int index, lua_State * L, float *number)
 {
 	bool isNR = false;
-	lua_pushnumber(L, push);
+	lua_pushnumber(L, index);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		*number = lua_tonumber(L, -1);
@@ -189,6 +192,14 @@ int App::camera(lua_State * L)
 
 int App::snapshot(lua_State * L)
 {
+	if (lua_isstring(L, -1)) {
+		std::string name = lua_tostring(L, -1);
+		irr::video::IImage *screenshot = m_driver->createScreenShot();
+		//irr::io::path path = irr::core::string<irr::c8>(name);
+		bool worked = m_driver->writeImageToFile(screenshot, path);
+		std::cout << worked << std::endl;
+	}
+	
 	return 0;
 }
 

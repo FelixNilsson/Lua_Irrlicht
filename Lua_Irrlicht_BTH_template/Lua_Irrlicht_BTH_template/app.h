@@ -9,14 +9,14 @@ private:
 	lua_State * L;
 
 	irr::IrrlichtDevice* m_device;
-	irr::video::IVideoDriver* m_driver;
+	static irr::video::IVideoDriver* m_driver;
 	irr::gui::IGUIEnvironment* m_guienv;
 	
 public:
 	static irr::scene::ISceneManager* m_smgr;
 	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
 private:
-	static bool isNumber(int push, lua_State * L, float *number);
+	static bool isNumber(int index, lua_State * L, float *number);
 public:
 	App();
 	~App();
