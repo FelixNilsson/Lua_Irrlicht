@@ -195,8 +195,11 @@ int App::snapshot(lua_State * L)
 	if (lua_isstring(L, -1)) {
 		std::string name = lua_tostring(L, -1);
 		irr::video::IImage *screenshot = m_driver->createScreenShot();
-		//irr::io::path path = irr::core::string<irr::c8>(name);
-		bool worked = m_driver->writeImageToFile(screenshot, path);
+		irr::io::path path();
+		irr::io::path p(irr::core::string<std::string>(name));
+		// = irr::core::string<irr::c8>(name);
+		//irr::core::stringc::string<char>(name);
+		bool worked = m_driver->writeImageToFile(screenshot, "t.png");
 		std::cout << worked << std::endl;
 	}
 	
