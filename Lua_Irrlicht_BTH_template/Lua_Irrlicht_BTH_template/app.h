@@ -11,6 +11,7 @@ private:
 	irr::IrrlichtDevice* m_device;
 	static irr::video::IVideoDriver* m_driver;
 	irr::gui::IGUIEnvironment* m_guienv;
+	static int m_id;
 	
 public:
 	static irr::scene::ISceneManager* m_smgr;

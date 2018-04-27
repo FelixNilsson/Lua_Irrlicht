@@ -1,10 +1,12 @@
 #include "app.h"
 #include <iostream>
 #include <path.h>
+#include <string>
 
 irr::scene::ISceneManager* App::m_smgr = nullptr;
 irr::video::IVideoDriver* App::m_driver = nullptr;
 std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
+int App::m_id = 0;
 
 
 bool App::isVector(lua_State * L, irr::core::vector3df *vector)
@@ -78,7 +80,7 @@ App::App()
 	lua_pushcfunction(this->L, snapshot);
 	lua_setglobal(this->L, "snapshot");
 	
-	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 30));
+	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 15));
 }
 
 App::~App()
@@ -132,7 +134,7 @@ int App::addBox(lua_State * L)
 	}
 
 	else {
-		name = "box";
+		name = "box" + std::to_string(m_id);
 		if (lua_isnumber(L, -1)) {
 			size = lua_tonumber(L, -1);
 			lua_pop(L, 1);
@@ -143,7 +145,8 @@ int App::addBox(lua_State * L)
 	}
 	
 	if (correct) {
-		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, 4, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
+		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, m_id, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
+		m_id++;
 		//m_boxes[m_boxes.size() - 1]->setName(&name);
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
