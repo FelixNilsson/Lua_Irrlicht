@@ -7,18 +7,31 @@ irr::video::IVideoDriver* App::m_driver = nullptr;
 std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
 
 
-bool App::isNumber(int index, lua_State * L, float *number)
+bool App::isVector(lua_State * L, irr::core::vector3df *vector)
 {
-	bool isNR = false;
-	lua_pushnumber(L, index);
+	int isNumber = 0;
+	lua_pushnumber(L, 1);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
-		*number = lua_tonumber(L, -1);
-		isNR = true;
+		vector->X = lua_tonumber(L, -1);
+		isNumber++;
 	}
-	int i = lua_istable(L, -2);
 	lua_pop(L, 1);
-	return isNR;
+	lua_pushnumber(L, 2);
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		vector->Y = lua_tonumber(L, -1);
+		isNumber++;
+	}
+	lua_pop(L, 1);
+	lua_pushnumber(L, 3);
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		vector->Z = lua_tonumber(L, -1);
+		isNumber++;
+	}
+	lua_pop(L, 1);
+	return isNumber == 3;
 }
 
 App::App()
@@ -76,7 +89,6 @@ bool App::run()
 
 void App::draw()
 {
-	//m_smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
 
 	if (m_device->isWindowActive()) {
 		m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
@@ -110,24 +122,7 @@ int App::addBox(lua_State * L)
 			size = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			if (lua_istable(L, -1)) {
-				/*lua_pushnumber(L, 1);
-				lua_gettable(L, -2);
-				if (lua_isnumber(L, -1))
-					ori.X = lua_tonumber(L, -1);
-				lua_pop(L, 2);*/
-				if (isNumber(1, L, &ori.X)) {
-					std::cout << "X" << std::endl;
-					if (isNumber(2, L, &ori.Y)) {
-						std::cout << "Y" << std::endl;
-						if (isNumber(3, L, &ori.Z)) {
-							std::cout << "Z" << std::endl;
-							correct = true;
-						}
-					}
-				}
-					
-				
-					
+				correct = isVector(L, &ori);
 			}
 		}
 	}
@@ -161,24 +156,11 @@ int App::camera(lua_State * L)
 	irr::core::vector3df pos;
 	irr::core::vector3df target;
 	if (lua_istable(L, -1)) {
-		if (isNumber(1, L, &target.X)) {
-			if (isNumber(2, L, &target.Y)) {
-				if (isNumber(3, L, &target.Z)) {
-					isPos = true;
-				}
-			}
-		}
-		debug = lua_gettop(L);
+		isTarget = isVector(L, &target);
 		lua_pop(L, 1);
 
 		if (lua_istable(L, -1)) {
-			if (isNumber(1, L, &pos.X)) {
-				if (isNumber(2, L, &pos.Y)) {
-					if (isNumber(3, L, &pos.Z)) {
-						isTarget = true;
-					}
-				}
-			}
+			isPos = isVector(L, &pos);
 		}
 		lua_pop(L, 1);
 		if (isPos && isTarget) {
@@ -192,6 +174,10 @@ int App::camera(lua_State * L)
 
 int App::snapshot(lua_State * L)
 {
+	irr::core::vector3df temp;
+	temp = m_smgr->getActiveCamera()->getPosition();
+	temp = m_smgr->getActiveCamera()->getAbsolutePosition();
+	temp = m_smgr->getActiveCamera()->getTarget();
 	if (lua_isstring(L, -1)) {
 		std::string name = lua_tostring(L, -1);
 		irr::video::IImage *screenshot = m_driver->createScreenShot();

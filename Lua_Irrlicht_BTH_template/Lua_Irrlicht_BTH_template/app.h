@@ -16,7 +16,7 @@ public:
 	static irr::scene::ISceneManager* m_smgr;
 	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
 private:
-	static bool isNumber(int index, lua_State * L, float *number);
+	static bool isVector(lua_State * L, irr::core::vector3df *vector);
 public:
 	App();
 	~App();
