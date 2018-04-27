@@ -128,7 +128,14 @@ int App::addBox(lua_State * L)
 	}
 
 	else {
-
+		name = "box";
+		if (lua_isnumber(L, -1)) {
+			size = lua_tonumber(L, -1);
+			lua_pop(L, 1);
+			if (lua_istable(L, -1)) {
+				correct = isVector(L, &ori);
+			}
+		}
 	}
 	
 	if (correct) {
