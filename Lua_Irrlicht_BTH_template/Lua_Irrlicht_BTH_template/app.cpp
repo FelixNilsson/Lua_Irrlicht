@@ -31,6 +31,10 @@ bool App::isVector(lua_State * L, irr::core::vector3df *vector)
 		isNumber++;
 	}
 	lua_pop(L, 1);
+	lua_pushnumber(L, 4);
+	if (lua_gettable(L, -2)) {
+		isNumber++;
+	}
 	return isNumber == 3;
 }
 
@@ -115,7 +119,7 @@ int App::addBox(lua_State * L)
 	std::string name;
 	bool correct = false;
 
-	if (lua_isstring(L, -1) != 0) {
+	if (lua_type(L, -1) == LUA_TSTRING) {
 		name = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		if (lua_isnumber(L, -1)) {
