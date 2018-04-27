@@ -9,27 +9,27 @@ std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
 int App::m_id = 0;
 
 
-bool App::isVector(lua_State * L, irr::core::vector3df *vector)
+bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 {
 	int isNumber = 0;
 	lua_pushnumber(L, 1);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
-		vector->X = lua_tonumber(L, -1);
+		vector.X = lua_tonumber(L, -1);
 		isNumber++;
 	}
 	lua_pop(L, 1);
 	lua_pushnumber(L, 2);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
-		vector->Y = lua_tonumber(L, -1);
+		vector.Y = lua_tonumber(L, -1);
 		isNumber++;
 	}
 	lua_pop(L, 1);
 	lua_pushnumber(L, 3);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
-		vector->Z = lua_tonumber(L, -1);
+		vector.Z = lua_tonumber(L, -1);
 		isNumber++;
 	}
 	lua_pop(L, 1);
@@ -38,6 +38,14 @@ bool App::isVector(lua_State * L, irr::core::vector3df *vector)
 		isNumber++;
 	}
 	return isNumber == 3;
+}
+
+void App::drawOneFrame()
+{
+	m_smgr->drawAll();
+	//m_guienv->drawAll();
+
+	m_driver->endScene();
 }
 
 App::App()
@@ -128,7 +136,7 @@ int App::addBox(lua_State * L)
 			size = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			if (lua_istable(L, -1)) {
-				correct = isVector(L, &ori);
+				correct = isVector(L, ori);
 			}
 		}
 	}
@@ -139,7 +147,7 @@ int App::addBox(lua_State * L)
 			size = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			if (lua_istable(L, -1)) {
-				correct = isVector(L, &ori);
+				correct = isVector(L, ori);
 			}
 		}
 	}
@@ -147,10 +155,11 @@ int App::addBox(lua_State * L)
 	if (correct) {
 		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, m_id, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
 		m_id++;
-		//m_boxes[m_boxes.size() - 1]->setName(&name);
+		m_boxes[m_boxes.size() - 1]->setName(irr::core::string<char*>(name.c_str()));
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		std::cout << "succes" << std::endl;
+		drawOneFrame();
 	}
 	
 	
@@ -170,11 +179,11 @@ int App::camera(lua_State * L)
 	irr::core::vector3df pos;
 	irr::core::vector3df target;
 	if (lua_istable(L, -1)) {
-		isTarget = isVector(L, &target);
+		isTarget = isVector(L, target);
 		lua_pop(L, 1);
 
 		if (lua_istable(L, -1)) {
-			isPos = isVector(L, &pos);
+			isPos = isVector(L, pos);
 		}
 		lua_pop(L, 1);
 		if (isPos && isTarget) {
@@ -195,11 +204,9 @@ int App::snapshot(lua_State * L)
 	if (lua_isstring(L, -1)) {
 		std::string name = lua_tostring(L, -1);
 		irr::video::IImage *screenshot = m_driver->createScreenShot();
-		irr::io::path path();
-		irr::io::path p(irr::core::string<char*>(name.c_str()));
-		// = irr::core::string<irr::c8>(name);
-		//irr::core::stringc::string<char>(name);
-		bool worked = m_driver->writeImageToFile(screenshot, p);
+		irr::io::path path(irr::core::string<char*>(name.c_str()));
+	
+		bool worked = m_driver->writeImageToFile(screenshot, path);
 		std::cout << worked << std::endl;
 	}
 	

@@ -17,7 +17,8 @@ public:
 	static irr::scene::ISceneManager* m_smgr;
 	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
 private:
-	static bool isVector(lua_State * L, irr::core::vector3df *vector);
+	static bool isVector(lua_State * L, irr::core::vector3df &vector);
+	static void drawOneFrame();
 public:
 	App();
 	~App();
