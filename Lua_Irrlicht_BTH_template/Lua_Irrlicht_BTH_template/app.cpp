@@ -250,7 +250,7 @@ int App::addBox(lua_State * L)
 int App::getNodes(lua_State * L)
 {
 	lua_newtable(L);
-	irr::scene::ISceneNodeList list = m_smgr->getRootSceneNode()->getChildren();
+	const irr::scene::ISceneNodeList& list = m_smgr->getRootSceneNode()->getChildren();
 
 	int index = 1;
 	for (auto e : list) {
