@@ -251,8 +251,9 @@ int App::getNodes(lua_State * L)
 {
 	irr::scene::ISceneNodeList list = m_smgr->getRootSceneNode()->getChildren();
 
-	for (int i = 0; i < list.size(); i++) {
-		//list[i].
+	for (auto e : list) {
+		e->getName();
+		e->getID();
 	}
 
 	return 0;
