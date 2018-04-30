@@ -143,7 +143,7 @@ int App::addMesh(lua_State * L)
 		int index = 1;
 		while (lua_geti(L, -1, index) == LUA_TTABLE) {
 			irr::core::vector3df vec;
-			if (isVector(L, &vec)) {
+			if (isVector(L, vec)) {
 				list.push_back(vec);
 			}
 			else {
