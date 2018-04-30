@@ -3,9 +3,16 @@
 #include <path.h>
 #include <string>
 
+using namespace irr;
+using namespace scene;
+using namespace core;
+using namespace video;
+using namespace gui;
+
 irr::scene::ISceneManager* App::m_smgr = nullptr;
 irr::video::IVideoDriver* App::m_driver = nullptr;
 irr::gui::IGUIEnvironment* App::m_guienv = nullptr;
+std::vector<irr::scene::IMeshSceneNode*> App::m_meshes;
 std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
 int App::m_id = 0;
 
@@ -137,30 +144,61 @@ int App::addMesh(lua_State * L)
 {
 	int size = lua_gettop(L);
 
-	if (size == 1 && lua_istable(L, -1)) {
-		std::vector<irr::core::vector3df> list;
-		int index = 1;
-		while (lua_geti(L, -1, index) == LUA_TTABLE) {
-			irr::core::vector3df vec;
-			if (isVector(L, vec)) {
-				list.push_back(vec);
-			}
-			else {
-				lua_pop(L, 1);
-				std::cout << "error in triangle list" << std::endl;
-				return 0;
-			}
-			index++;
-			lua_pop(L, 1);
+	if (size != 1) {
+		std::cout << "To wrong arguments" << std::endl;
+		return 0;
+	}
+	else if (!lua_istable(L, -1)) {
+		std::cout << "expects a table" << std::endl;
+		return 0;
+	}
+
+	std::vector<irr::core::vector3df> list;
+	irr::scene::SMesh* mesh = new SMesh();
+	SMeshBuffer* buffer = new SMeshBuffer();
+	mesh->addMeshBuffer(buffer);
+	buffer->drop();
+	//int index = 1;
+	int type;
+	lua_len(L, -1);
+	int length = lua_tointeger(L, -1);
+	lua_pop(L, 1);
+	std::cout << length << std::endl;
+	bool error = false;
+	for (int i = 0; i < length && !error; i++) /*((type = lua_geti(L, -1, index)) == LUA_TTABLE)*/ {
+		irr::core::vector3df vec;
+		lua_geti(L, -1, i + 1);
+		if (isVector(L, vec)) {
+			list.push_back(vec);
 		}
-		std::cout << "added elements: " << index - 1 << std::endl;
-		for (auto& vec : list) {
-			std::cout << vec.X << ", " << vec.Y << ", " << vec.Z << std::endl;
+		else {
+			error = true;
 		}
+		lua_pop(L, 1);
+	}
+	if (error) {
+		std::cout << "error in triangle list" << std::endl;
+		std::cout << "WARNING!!! bad argument(s)" << std::endl;
 	}
 	else {
-		std::cout << "To wrong arguments" << std::endl;
+		buffer->Vertices.reallocate(list.size());
+		buffer->Vertices.set_used(list.size());
+		buffer->Indices.reallocate(list.size());
+		buffer->Indices.set_used(list.size());
+
+		for (int i = 0; i < list.size(); i++) {
+			S3DVertex& v = buffer->Vertices[i];
+			v.Pos.set(list[i]);
+			buffer->Indices[i] = i;
+		}		
+		buffer->recalculateBoundingBox();
+		m_meshes.push_back(m_smgr->addMeshSceneNode(mesh));
 	}
+	//std::cout << "added elements: " << index - 1 << std::endl;
+	for (auto& vec : list) {
+		std::cout << vec.X << ", " << vec.Y << ", " << vec.Z << std::endl;
+	}
+	
 
 
 	return 0;
