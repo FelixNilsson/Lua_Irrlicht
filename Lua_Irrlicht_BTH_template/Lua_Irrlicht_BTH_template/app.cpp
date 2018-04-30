@@ -12,6 +12,7 @@ int App::m_id = 0;
 
 bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 {
+	//size_t len = lua_rawlen(L,1); ???
 	int isNumber = 0;
 	lua_pushnumber(L, 1);
 	lua_gettable(L, -2);
@@ -135,6 +136,34 @@ void App::draw()
 
 int App::addMesh(lua_State * L)
 {
+	int size = lua_gettop(L);
+
+	if (size == 1 && lua_istable(L, -1)) {
+		std::vector<irr::core::vector3df> list;
+		int index = 1;
+		while (lua_geti(L, -1, index) == LUA_TTABLE) {
+			irr::core::vector3df vec;
+			if (isVector(L, &vec)) {
+				list.push_back(vec);
+			}
+			else {
+				lua_pop(L, 1);
+				std::cout << "error in triangle list" << std::endl;
+				return 0;
+			}
+			index++;
+			lua_pop(L, 1);
+		}
+		std::cout << "added elements: " << index - 1 << std::endl;
+		for (auto& vec : list) {
+			std::cout << vec.X << ", " << vec.Y << ", " << vec.Z << std::endl;
+		}
+	}
+	else {
+		std::cout << "To wrong arguments" << std::endl;
+	}
+
+
 	return 0;
 }
 
