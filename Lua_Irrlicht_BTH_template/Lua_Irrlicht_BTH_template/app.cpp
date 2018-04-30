@@ -18,6 +18,9 @@ bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 	if (lua_isnumber(L, -1)) {
 		vector.X = lua_tonumber(L, -1);
 		isNumber++;
+	} 
+	else {
+		std::cout << "expected a number" << std::endl;
 	}
 	lua_pop(L, 1);
 	lua_pushnumber(L, 2);
@@ -26,6 +29,9 @@ bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 		vector.Y = lua_tonumber(L, -1);
 		isNumber++;
 	}
+	else {
+		std::cout << "expected a number" << std::endl;
+	}
 	lua_pop(L, 1);
 	lua_pushnumber(L, 3);
 	lua_gettable(L, -2);
@@ -33,12 +39,19 @@ bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 		vector.Z = lua_tonumber(L, -1);
 		isNumber++;
 	}
+	else {
+		std::cout << "expected a number" << std::endl;
+	}
 	lua_pop(L, 1);
 	lua_pushnumber(L, 4);
 	if (lua_gettable(L, -2)) {
 		isNumber++;
+		std::cout << "to many arguments in the table" << std::endl;
 	}
 	lua_pop(L, 1);
+	if (isNumber < 3)
+		std::cout << "to few arguments in the table" << std::endl;
+		
 	return isNumber == 3;
 }
 
