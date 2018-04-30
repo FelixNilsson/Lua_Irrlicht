@@ -106,6 +106,7 @@ App::App()
 	lua_setglobal(this->L, "snapshot");
 	
 	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 15));
+	m_smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
 }
 
 App::~App()
@@ -122,11 +123,14 @@ void App::draw()
 {
 
 	if (m_device->isWindowActive()) {
-		drawOneFrame();
+		m_smgr->getActiveCamera()->setInputReceiverEnabled(true);
+		
 	}
 	else {
-		m_device->yield();
+		//m_device->yield();
+		m_smgr->getActiveCamera()->setInputReceiverEnabled(false);
 	}
+	drawOneFrame();
 }
 
 int App::addMesh(lua_State * L)
@@ -171,7 +175,7 @@ int App::addBox(lua_State * L)
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		std::cout << "succes" << std::endl;
-		drawOneFrame();
+		//drawOneFrame();
 	}
 	
 	
