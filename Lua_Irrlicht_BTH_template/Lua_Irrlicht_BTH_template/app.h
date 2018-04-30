@@ -23,6 +23,8 @@ public:
 private:
 	static bool isVector(lua_State * L, irr::core::vector3df &vector);
 	static void drawOneFrame();
+	static bool isPowerOfTwo(int nr);
+	static irr::scene::ISceneNode* getSceneNode(std::string nodeName);
 public:
 	App();
 	~App();

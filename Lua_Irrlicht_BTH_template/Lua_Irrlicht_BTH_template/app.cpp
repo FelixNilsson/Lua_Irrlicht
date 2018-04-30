@@ -73,6 +73,28 @@ void App::drawOneFrame()
 	m_driver->endScene();
 }
 
+bool App::isPowerOfTwo(int nr)
+{
+	int temp = 2;
+	while (nr >= temp) {
+		temp * 2;
+	}
+	return nr == temp;
+}
+
+irr::scene::ISceneNode* App::getSceneNode(std::string nodeName)
+{
+	const irr::scene::ISceneNodeList& list = m_smgr->getRootSceneNode()->getChildren();
+	irr::scene::ISceneNode *node = nullptr;
+	for (auto e : list) {
+		if (e->getName() == nodeName) {
+			node = e;
+		}
+			
+	}
+	return node;
+}
+
 App::App()
 {
 	m_device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
@@ -112,6 +134,10 @@ App::App()
 	lua_setglobal(this->L, "getNodes");
 	lua_pushcfunction(this->L, snapshot);
 	lua_setglobal(this->L, "snapshot");
+	lua_pushcfunction(this->L, addTexture);
+	lua_setglobal(this->L, "addTexture");
+	lua_pushcfunction(this->L, bind);
+	lua_setglobal(this->L, "bind");
 	
 	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 15));
 	m_smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
@@ -303,11 +329,71 @@ int App::snapshot(lua_State * L)
 
 int App::addTexture(lua_State * L)
 {
+	std::vector<irr::core::vector3df> color;
+	//std::vector<irr::core::vector3df> row;
+	bool error = false;
+	int column;
+	if (lua_isstring(L, -1)) {
+		std::string name = lua_tostring(L, -1);
+		lua_pop(L, 1);
+		if (lua_istable(L, -1)) {//first table
+			int row = 1;
+			lua_pushnumber(L, row);
+			while (lua_gettable(L, -2) && !error) {//second table
+					int index = 1;
+					lua_pushnumber(L, index);
+					while (lua_gettable(L, -2) && !error) {//third table
+						irr::core::vector3df temp;
+						if (isVector(L, temp))
+							color.push_back(temp);
+						else
+							error = true;
+						index++;
+						lua_pushnumber(L, index);
+
+					}
+					column = index;
+					row++;
+					lua_pushnumber(L, row);
+			}
+			row--;
+			column--;
+			if (row == column && isPowerOfTwo(row)) {
+				irr::video::IImage *p;
+				for (int i = 0; i < row; i++) {
+					for (int k = 0; k < column; k++) {
+						color[i * k + k];
+						//p->setPixel(k, i, irr::video::SColor(color[i * k + k].X * 255, color[i * k + k].Y * 255, color[i * k + k].Z * 255, 1), false);
+					}
+				}
+				//m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
+			}
+		}
+	}
+
+	
+
 	return 0;
 }
 
 int App::bind(lua_State * L)
 {
+	std::string textureName;
+	std::string nodeName;
+	if (lua_isstring(L, -1)) {
+		textureName = lua_tostring(L, -1);
+		lua_pop(L, 1);
+		if (lua_isstring(L, -1)) {
+			nodeName = lua_tostring(L, -1);
+			auto node = getSceneNode(nodeName);
+			if (node) {
+				auto texture = m_driver->getTexture(irr::core::string<char*>(nodeName.c_str()));
+				if (texture) {
+					node->setMaterialTexture(1, texture);
+				}
+			}
+		}
+	}
 	return 0;
 }
 
