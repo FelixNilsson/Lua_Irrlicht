@@ -300,6 +300,16 @@ int App::snapshot(lua_State * L)
 	return 0;
 }
 
+int App::addTexture(lua_State * L)
+{
+	return 0;
+}
+
+int App::bind(lua_State * L)
+{
+	return 0;
+}
+
 lua_State * App::getLuaState()
 {
 	return this->L;
