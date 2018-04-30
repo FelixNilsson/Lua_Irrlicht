@@ -13,6 +13,7 @@ private:
 	static irr::scene::ISceneManager* m_smgr;
 	static irr::gui::IGUIEnvironment* m_guienv;
 
+	static std::vector<irr::scene::IMeshSceneNode*> m_meshes;
 	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
 	static int m_id;
 	
