@@ -238,8 +238,8 @@ int App::addBox(lua_State * L)
 		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, m_id, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
 		m_id++;
 		m_boxes[m_boxes.size() - 1]->setName(irr::core::string<char*>(name.c_str()));
-		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
-		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
+		m_boxes[m_boxes.size() - 1]->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+		m_boxes[m_boxes.size() - 1]->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		std::cout << "succes" << std::endl;
 	}
 	
@@ -249,14 +249,21 @@ int App::addBox(lua_State * L)
 
 int App::getNodes(lua_State * L)
 {
+	lua_newtable(L);
 	irr::scene::ISceneNodeList list = m_smgr->getRootSceneNode()->getChildren();
 
+	int index = 1;
 	for (auto e : list) {
-		e->getName();
-		e->getID();
+		lua_newtable(L);
+		lua_pushstring(L, e->getName());
+		lua_rawseti(L, -2, 1);
+		lua_pushinteger(L, e->getID());
+		lua_rawseti(L, -2, 2);
+		lua_rawseti(L, -2, index);
+		index++;
 	}
 
-	return 0;
+	return 1;
 }
 
 int App::camera(lua_State * L)
