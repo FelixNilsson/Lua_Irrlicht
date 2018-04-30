@@ -90,7 +90,7 @@ App::App()
 	keymap[3].Action = irr::EKA_STRAFE_RIGHT;
 	keymap[3].KeyCode = irr::KEY_KEY_D;
 
-	m_smgr->addCameraSceneNodeFPS(0, 100, 0.5, -1, keymap, 4);
+	m_smgr->addCameraSceneNodeFPS(0, 100, 0.1, -1, keymap, 4, false, 100, false, true);
 
 	this->L = luaL_newstate();
 	luaL_openlibs(this->L);
@@ -128,7 +128,6 @@ void App::draw()
 		
 	}
 	else {
-		//m_device->yield();
 		m_smgr->getActiveCamera()->setInputReceiverEnabled(false);
 	}
 	drawOneFrame();
@@ -204,7 +203,6 @@ int App::addBox(lua_State * L)
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		std::cout << "succes" << std::endl;
-		//drawOneFrame();
 	}
 	
 	
@@ -213,6 +211,12 @@ int App::addBox(lua_State * L)
 
 int App::getNodes(lua_State * L)
 {
+	irr::scene::ISceneNodeList list = m_smgr->getRootSceneNode()->getChildren();
+
+	for (int i = 0; i < list.size(); i++) {
+		//list[i].
+	}
+
 	return 0;
 }
 
