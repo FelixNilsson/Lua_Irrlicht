@@ -5,6 +5,7 @@
 
 irr::scene::ISceneManager* App::m_smgr = nullptr;
 irr::video::IVideoDriver* App::m_driver = nullptr;
+irr::gui::IGUIEnvironment* App::m_guienv = nullptr;
 std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
 int App::m_id = 0;
 
@@ -37,13 +38,16 @@ bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 	if (lua_gettable(L, -2)) {
 		isNumber++;
 	}
+	lua_pop(L, 1);
 	return isNumber == 3;
 }
 
 void App::drawOneFrame()
 {
+	m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
+
 	m_smgr->drawAll();
-	//m_guienv->drawAll();
+	m_guienv->drawAll();
 
 	m_driver->endScene();
 }
@@ -105,12 +109,7 @@ void App::draw()
 {
 
 	if (m_device->isWindowActive()) {
-		m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
-
-		m_smgr->drawAll();
-		m_guienv->drawAll();
-
-		m_driver->endScene();
+		drawOneFrame();
 	}
 	else {
 		m_device->yield();

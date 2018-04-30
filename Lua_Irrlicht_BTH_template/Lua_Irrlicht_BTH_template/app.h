@@ -10,12 +10,15 @@ private:
 
 	irr::IrrlichtDevice* m_device;
 	static irr::video::IVideoDriver* m_driver;
-	irr::gui::IGUIEnvironment* m_guienv;
+	static irr::scene::ISceneManager* m_smgr;
+	static irr::gui::IGUIEnvironment* m_guienv;
+
+	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
 	static int m_id;
 	
 public:
-	static irr::scene::ISceneManager* m_smgr;
-	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
+	
+	
 private:
 	static bool isVector(lua_State * L, irr::core::vector3df &vector);
 	static void drawOneFrame();
