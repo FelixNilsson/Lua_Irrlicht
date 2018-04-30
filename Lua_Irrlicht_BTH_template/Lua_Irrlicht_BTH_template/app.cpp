@@ -1,42 +1,69 @@
 #include "app.h"
 #include <iostream>
 #include <path.h>
+#include <string>
 
 irr::scene::ISceneManager* App::m_smgr = nullptr;
 irr::video::IVideoDriver* App::m_driver = nullptr;
+irr::gui::IGUIEnvironment* App::m_guienv = nullptr;
 std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
+int App::m_id = 0;
 
 
-bool App::isVector(lua_State * L, irr::core::vector3df *vector)
+bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 {
 	//size_t len = lua_rawlen(L,1); ???
 	int isNumber = 0;
 	lua_pushnumber(L, 1);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
-		vector->X = lua_tonumber(L, -1);
+		vector.X = lua_tonumber(L, -1);
 		isNumber++;
+	} 
+	else {
+		std::cout << "expected a number" << std::endl;
 	}
 	lua_pop(L, 1);
 	lua_pushnumber(L, 2);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
-		vector->Y = lua_tonumber(L, -1);
+		vector.Y = lua_tonumber(L, -1);
 		isNumber++;
+	}
+	else {
+		std::cout << "expected a number" << std::endl;
 	}
 	lua_pop(L, 1);
 	lua_pushnumber(L, 3);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
-		vector->Z = lua_tonumber(L, -1);
+		vector.Z = lua_tonumber(L, -1);
 		isNumber++;
+	}
+	else {
+		std::cout << "expected a number" << std::endl;
 	}
 	lua_pop(L, 1);
 	lua_pushnumber(L, 4);
 	if (lua_gettable(L, -2)) {
 		isNumber++;
+		std::cout << "to many arguments in the table" << std::endl;
 	}
+	lua_pop(L, 1);
+	if (isNumber < 3)
+		std::cout << "to few arguments in the table" << std::endl;
+		
 	return isNumber == 3;
+}
+
+void App::drawOneFrame()
+{
+	m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
+
+	m_smgr->drawAll();
+	m_guienv->drawAll();
+
+	m_driver->endScene();
 }
 
 App::App()
@@ -79,7 +106,7 @@ App::App()
 	lua_pushcfunction(this->L, snapshot);
 	lua_setglobal(this->L, "snapshot");
 	
-	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 30));
+	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 15));
 }
 
 App::~App()
@@ -96,12 +123,7 @@ void App::draw()
 {
 
 	if (m_device->isWindowActive()) {
-		m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
-
-		m_smgr->drawAll();
-		m_guienv->drawAll();
-
-		m_driver->endScene();
+		drawOneFrame();
 	}
 	else {
 		m_device->yield();
@@ -155,28 +177,30 @@ int App::addBox(lua_State * L)
 			size = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			if (lua_istable(L, -1)) {
-				correct = isVector(L, &ori);
+				correct = isVector(L, ori);
 			}
 		}
 	}
 
 	else {
-		name = "box";
+		name = "box" + std::to_string(m_id);
 		if (lua_isnumber(L, -1)) {
 			size = lua_tonumber(L, -1);
 			lua_pop(L, 1);
 			if (lua_istable(L, -1)) {
-				correct = isVector(L, &ori);
+				correct = isVector(L, ori);
 			}
 		}
 	}
 	
 	if (correct) {
-		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, 4, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
-		//m_boxes[m_boxes.size() - 1]->setName(&name);
+		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, m_id, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
+		m_id++;
+		m_boxes[m_boxes.size() - 1]->setName(irr::core::string<char*>(name.c_str()));
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_LIGHTING, false);
 		m_boxes.operator[](m_boxes.size() - 1)->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		std::cout << "succes" << std::endl;
+		drawOneFrame();
 	}
 	
 	
@@ -196,11 +220,11 @@ int App::camera(lua_State * L)
 	irr::core::vector3df pos;
 	irr::core::vector3df target;
 	if (lua_istable(L, -1)) {
-		isTarget = isVector(L, &target);
+		isTarget = isVector(L, target);
 		lua_pop(L, 1);
 
 		if (lua_istable(L, -1)) {
-			isPos = isVector(L, &pos);
+			isPos = isVector(L, pos);
 		}
 		lua_pop(L, 1);
 		if (isPos && isTarget) {
@@ -221,11 +245,9 @@ int App::snapshot(lua_State * L)
 	if (lua_isstring(L, -1)) {
 		std::string name = lua_tostring(L, -1);
 		irr::video::IImage *screenshot = m_driver->createScreenShot();
-		irr::io::path path();
-		irr::io::path p(irr::core::string<char*>(name.c_str()));
-		// = irr::core::string<irr::c8>(name);
-		//irr::core::stringc::string<char>(name);
-		bool worked = m_driver->writeImageToFile(screenshot, p);
+		irr::io::path path(irr::core::string<char*>(name.c_str()));
+	
+		bool worked = m_driver->writeImageToFile(screenshot, path);
 		std::cout << worked << std::endl;
 	}
 	
