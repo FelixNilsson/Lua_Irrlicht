@@ -16,7 +16,7 @@ private:
 	static std::vector<irr::scene::IMeshSceneNode*> m_meshes;
 	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
 	static int m_id;
-	
+	void setupScript();
 public:
 	
 	

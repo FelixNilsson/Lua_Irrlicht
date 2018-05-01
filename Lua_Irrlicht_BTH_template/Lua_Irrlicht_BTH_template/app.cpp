@@ -138,6 +138,8 @@ App::App()
 	lua_setglobal(this->L, "addTexture");
 	lua_pushcfunction(this->L, bind);
 	lua_setglobal(this->L, "bind");
+
+	setupScript();
 	
 	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 15));
 	m_smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
@@ -421,4 +423,11 @@ int App::bind(lua_State * L)
 lua_State * App::getLuaState()
 {
 	return this->L;
+}
+
+void App::setupScript() {
+	if (luaL_dofile(L, "setup.lua")) {
+		std::cout << "Couldn't load script" << std::endl;
+		return;
+	}
 }
