@@ -76,8 +76,8 @@ void App::drawOneFrame()
 bool App::isPowerOfTwo(int nr)
 {
 	int temp = 2;
-	while (nr >= temp) {
-		temp * 2;
+	while (nr > temp) {
+		temp *= 2;
 	}
 	return nr == temp;
 }
@@ -338,6 +338,7 @@ int App::snapshot(lua_State * L)
 
 int App::addTexture(lua_State * L)
 {
+	int isTable;
 	std::vector<irr::core::vector3df> color;
 	//std::vector<irr::core::vector3df> row;
 	bool error = false;
@@ -348,34 +349,39 @@ int App::addTexture(lua_State * L)
 		if (lua_istable(L, -1)) {//first table
 			int row = 1;
 			lua_pushnumber(L, row);
-			while (lua_gettable(L, -2) && !error) {//second table
+			while (isTable = lua_gettable(L, -2) && !error) {//second table
 					int index = 1;
 					lua_pushnumber(L, index);
-					while (lua_gettable(L, -2) && !error) {//third table
+					while (isTable = lua_gettable(L, -2) && !error) {//third table
 						irr::core::vector3df temp;
+						int debug = lua_istable(L, -1);
 						if (isVector(L, temp))
 							color.push_back(temp);
 						else
 							error = true;
 						index++;
+						lua_pop(L, 1);
 						lua_pushnumber(L, index);
 
 					}
 					column = index;
 					row++;
+					lua_pop(L, 2);
 					lua_pushnumber(L, row);
 			}
 			row--;
 			column--;
 			if (row == column && isPowerOfTwo(row)) {
 				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(row,column), &color[0], false, false);
-				for (int i = 0; i < row; i++) {
+				/*for (int i = 0; i < row; i++) {
 					for (int k = 0; k < column; k++) {
 						color[i * k + k];
 						//p->setPixel(k, i, irr::video::SColor(color[i * k + k].X * 255, color[i * k + k].Y * 255, color[i * k + k].Z * 255, 1), false);
 					}
-				}
-				m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
+				}*/
+				auto debugP = m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
+				if (debugP)
+					std::cout << "texture works" << std::endl;
 			}
 		}
 	}
@@ -396,9 +402,9 @@ int App::bind(lua_State * L)
 			nodeName = lua_tostring(L, -1);
 			auto node = getSceneNode(nodeName);
 			if (node) {
-				auto texture = m_driver->getTexture(irr::core::string<char*>(nodeName.c_str()));
+				auto texture = m_driver->getTexture(irr::core::string<char*>(textureName.c_str()));
 				if (texture) {
-					node->setMaterialTexture(1, texture);
+					node->setMaterialTexture(0, texture);
 				}
 			}
 		}
