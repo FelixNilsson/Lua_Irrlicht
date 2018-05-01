@@ -375,9 +375,9 @@ int App::addTexture(lua_State * L)
 				char *data = new char[row * column * 3];
 				for (int i = 0; i < row; i++) {
 					for (int k = 0; k < column; k++) {
-						data[i * k + k + 0] = 255;//color[i * k + k].X * 255;
-						data[i * k + k + 1] = 255;//color[i * k + k].Y * 255;
-						data[i * k + k + 2] = 255;//color[i * k + k].Z * 255;
+						data[i * k + k + 0] = color[i * k + k].X * 255;
+						data[i * k + k + 1] = color[i * k + k].Y * 255;
+						data[i * k + k + 2] = color[i * k + k].Z * 255;
 					}
 				}
 				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(row,column), data, false, false);
