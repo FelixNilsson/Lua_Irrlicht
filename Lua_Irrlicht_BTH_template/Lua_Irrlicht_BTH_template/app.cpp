@@ -372,13 +372,16 @@ int App::addTexture(lua_State * L)
 			row--;
 			column--;
 			if (row == column && isPowerOfTwo(row)) {
-				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(row,column), &color[0], false, false);
-				/*for (int i = 0; i < row; i++) {
+				char *data = new char[row * column * 3];
+				for (int i = 0; i < row; i++) {
 					for (int k = 0; k < column; k++) {
-						color[i * k + k];
-						//p->setPixel(k, i, irr::video::SColor(color[i * k + k].X * 255, color[i * k + k].Y * 255, color[i * k + k].Z * 255, 1), false);
+						data[i * column * 3 + k * 3 + 0] = color[i * column + k].X * 255;
+						data[i * column * 3 + k * 3 + 1] = color[i * column + k].Y * 255;
+						data[i * column * 3 + k * 3 + 2] = color[i * column + k].Z * 255;
 					}
-				}*/
+				}
+				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(row,column), (void*)data, false, false);
+				
 				auto debugP = m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
 				if (debugP)
 					std::cout << "texture works" << std::endl;
