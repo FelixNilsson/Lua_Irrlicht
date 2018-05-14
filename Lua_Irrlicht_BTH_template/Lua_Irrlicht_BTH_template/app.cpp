@@ -220,14 +220,14 @@ int App::addMesh(lua_State * L)
 			buffer->Indices[i] = i;
 		}		
 		buffer->recalculateBoundingBox();
-		m_meshes.push_back(m_smgr->addMeshSceneNode(mesh));
+		auto p = m_smgr->addMeshSceneNode(mesh);
+		p->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
+		m_meshes.push_back(p);
 	}
 	//std::cout << "added elements: " << index - 1 << std::endl;
 	for (auto& vec : list) {
 		std::cout << vec.X << ", " << vec.Y << ", " << vec.Z << std::endl;
 	}
-	
-
 
 	return 0;
 }

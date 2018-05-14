@@ -60,7 +60,6 @@ int main()
 	}
 
 	//device->drop();
-
-	conThread.join();
+	conThread.detach();
 	return 0;
 }
