@@ -8,7 +8,7 @@ class App {
 private:
 	lua_State * L;
 
-	irr::IrrlichtDevice* m_device;
+	static irr::IrrlichtDevice* m_device;
 	static irr::video::IVideoDriver* m_driver;
 	static irr::scene::ISceneManager* m_smgr;
 	static irr::gui::IGUIEnvironment* m_guienv;
@@ -25,6 +25,7 @@ private:
 	static void drawOneFrame();
 	static bool isPowerOfTwo(int nr);
 	static irr::scene::ISceneNode* getSceneNode(std::string nodeName);
+	static void destroyScene();
 public:
 	App();
 	~App();

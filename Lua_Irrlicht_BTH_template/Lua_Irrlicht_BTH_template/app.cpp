@@ -12,6 +12,7 @@ using namespace core;
 using namespace video;
 using namespace gui;
 
+irr::IrrlichtDevice* App::m_device = nullptr;
 irr::scene::ISceneManager* App::m_smgr = nullptr;
 irr::video::IVideoDriver* App::m_driver = nullptr;
 irr::gui::IGUIEnvironment* App::m_guienv = nullptr;
@@ -98,6 +99,12 @@ irr::scene::ISceneNode* App::getSceneNode(std::string nodeName)
 	return node;
 }
 
+void App::destroyScene()
+{
+	m_smgr->getRootSceneNode()->removeAll();
+
+}
+
 App::App()
 {
 	m_device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
@@ -112,7 +119,7 @@ App::App()
 
 	m_guienv->addStaticText(L"Hello World! This is the Irrlicht Software renderer!", irr::core::rect<irr::s32>(10, 10, 260, 22), true);
 
-	irr::SKeyMap keymap[4];
+	irr::SKeyMap keymap[5];
 	keymap[0].Action = irr::EKA_MOVE_FORWARD;
 	keymap[0].KeyCode = irr::KEY_KEY_W;
 	keymap[1].Action = irr::EKA_MOVE_BACKWARD;
@@ -121,8 +128,10 @@ App::App()
 	keymap[2].KeyCode = irr::KEY_KEY_A;
 	keymap[3].Action = irr::EKA_STRAFE_RIGHT;
 	keymap[3].KeyCode = irr::KEY_KEY_D;
+	keymap[4].Action = irr::EKA_JUMP_UP;
+	keymap[4].KeyCode = irr::KEY_SPACE;
 
-	m_smgr->addCameraSceneNodeFPS(0, 100, 0.1, -1, keymap, 4, false, 100, false, true);
+	m_smgr->addCameraSceneNodeFPS(0, 100, 0.1, -1, keymap, 5, false, 100, false, true);
 
 	this->L = luaL_newstate();
 	luaL_openlibs(this->L);
@@ -437,6 +446,8 @@ int App::loadScene(lua_State* L) {
 	t.close();
 
 	SceneParser parser(&buffer.str()[0]);
+
+	destroyScene();
 
 	return 0;
 }
