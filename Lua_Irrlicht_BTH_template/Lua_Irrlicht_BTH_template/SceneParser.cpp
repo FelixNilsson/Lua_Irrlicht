@@ -66,7 +66,8 @@ bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
 	return false;
 }
 
-bool SceneParser::TEXTURE(Tree** tree) {
+bool SceneParser::TEXTURE(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER ")"
+	
 	
 
 }
@@ -146,15 +147,44 @@ bool SceneParser::TRIANGLE(Tree** tree) {// TRIANGLE:	VECTOR3 "," VECTOR3 "," VE
 	return false;
 }
 
-bool SceneParser::VECTOR3(Tree** tree) {
+bool SceneParser::VECTOR3(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER ")"
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	Tree* child4 = nullptr;
+	Tree* child5 = nullptr;
+	Tree* child6 = nullptr;
+	Tree* child7 = nullptr;
+	char* start = m_input;
+	if (TERM("(", &child1) && NUMBER(&child2) && TERM(",", &child3) && NUMBER(&child4) && TERM(",", &child5) && NUMBER(&child6) && TERM(")", &child7)) {
+		*tree = new Tree("VECTOT3", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child3);
+		(*tree)->m_children.push_back(child4);
+		(*tree)->m_children.push_back(child5);
+		(*tree)->m_children.push_back(child6);
+		(*tree)->m_children.push_back(child7);
 
+		return true;
+	}
+	return false;
 }
-//",\n" TRIANGLE | EMPTY
-bool SceneParser::TSEPERATOR(Tree** tree) {
 
+bool SceneParser::TSEPERATOR(Tree** tree) {//",\n" TRIANGLE | EMPTY
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	char* start = m_input;
+
+	if (TERM(",\n", &child1) && TRIANGLE(&child2)) {
+		*tree = new Tree("TSEPERATOR", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+	}
+	return true;
 }
-//"-"[0 - 9] * | [0 - 9] *
-bool SceneParser::NUMBER(Tree** tree) {
+
+bool SceneParser::NUMBER(Tree** tree) {//"-"[0 - 9] * | [0 - 9] *
 	char *start = m_input;
 	Tree *child;
 
@@ -179,8 +209,8 @@ bool SceneParser::NUMBER(Tree** tree) {
 	return false;
 }
 
-//"{" SFUNCTIONS "}"
-bool SceneParser::SBODY(Tree** tree) {
+
+bool SceneParser::SBODY(Tree** tree) {//"{" SFUNCTIONS "}"
 	Tree *child1, *child2, *child3;
 	char *start = m_input;
 
@@ -193,8 +223,8 @@ bool SceneParser::SBODY(Tree** tree) {
 	}
 	return false;
 }
-// SFUNCTIONS:	"Mesh(" STRING ")" SFUNCTIONS | EMPTY
-bool SceneParser::SFUNCTIONS(Tree** tree) {
+
+bool SceneParser::SFUNCTIONS(Tree** tree) { // SFUNCTIONS:	"Mesh(" STRING ")" SFUNCTIONS | EMPTY
 	Tree *child1, *child2, *child3;
 	char* start = m_input;
 	if (TERM("Mesh(", &child1) && STRING(&child2) && SFUNCTIONS(&child3)) {
