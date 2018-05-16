@@ -13,6 +13,8 @@
 #include <irrlicht.h>
 #include "app.h"
 
+#include <crtdbg.h> 
+
 void ConsoleThread(lua_State* L) {
 	char command[1000];
 	while(GetConsoleWindow()) {
@@ -26,6 +28,8 @@ void ConsoleThread(lua_State* L) {
 
 int main()
 {
+	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	
 	App app;
 	std::thread conThread(ConsoleThread, app.getLuaState());
 
@@ -60,6 +64,10 @@ int main()
 	}
 
 	//device->drop();
-	conThread.detach();
+	//conThread.detach();
+	conThread.join();
+
+	//int *p = new int[20];
+
 	return 0;
 }

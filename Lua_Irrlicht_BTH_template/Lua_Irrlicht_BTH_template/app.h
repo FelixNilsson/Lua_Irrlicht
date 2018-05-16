@@ -37,5 +37,6 @@ public:
 	static int snapshot(lua_State* L);
 	static int addTexture(lua_State* L);
 	static int bind(lua_State* L);
+	static int loadScene(lua_State* L);
 	lua_State* getLuaState();
 };

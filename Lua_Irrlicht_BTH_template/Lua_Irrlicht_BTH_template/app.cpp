@@ -2,6 +2,8 @@
 #include <iostream>
 #include <path.h>
 #include <string>
+#include <fstream>
+#include <sstream>
 
 using namespace irr;
 using namespace scene;
@@ -138,6 +140,8 @@ App::App()
 	lua_setglobal(this->L, "addTexture");
 	lua_pushcfunction(this->L, bind);
 	lua_setglobal(this->L, "bind");
+	lua_pushcfunction(this->L, loadScene);
+	lua_setglobal(this->L, "loadScene");
 
 	setupScript();
 	
@@ -412,6 +416,25 @@ int App::bind(lua_State * L)
 			}
 		}
 	}
+	return 0;
+}
+
+int App::loadScene(lua_State* L) {
+	if (!lua_isstring(L, -1)) {
+		std::cout << "wrong argument" << std::endl;
+		return 0;
+	}
+
+	std::string filename = lua_tostring(L, -1);
+	std::ifstream t(filename);
+	if (!t.is_open()) {
+		std::cout << "couldnt open file" << std::endl;
+		return 0;
+	}
+	std::stringstream buffer;
+	buffer << t.rdbuf();
+	t.close();
+
 	return 0;
 }
 
