@@ -26,7 +26,9 @@ SceneParser::~SceneParser() {
 
 bool SceneParser::FILE(Tree** tree) {
 	Tree* child1, *child2;
+	char* start = m_input;
 	if (FUNCTION(&child1) && FILE(&child2)) {
+		*tree = new Tree("FILE", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
 	}
@@ -35,7 +37,9 @@ bool SceneParser::FILE(Tree** tree) {
 
 bool SceneParser::FUNCTION(Tree** tree) {
 	Tree *child;
+	char* start = m_input;
 	if (MESH(&child) || TEXTURE(&child) || SCENE(&child)) {
+		*tree = new Tree("FUNCTION", start, m_input - start);
 		(*tree)->m_children.push_back(child);
 		return true;
 	}
@@ -69,21 +73,61 @@ bool SceneParser::TRIANGLE(Tree** tree) {
 bool SceneParser::VECTOR3(Tree** tree) {
 
 }
-
+//",\n" TRIANGLE | EMPTY
 bool SceneParser::TSEPERATOR(Tree** tree) {
 
 }
-
+//"-"[0 - 9] * | [0 - 9] *
 bool SceneParser::NUMBER(Tree** tree) {
+	char *start = m_input;
+	Tree *child;
 
+	if (TERM("-", &child)) {
+		int nr = sDigit.match(m_input);
+		if (nr > 0) {
+			m_input += nr;
+			*tree = new Tree("NUMBER", start, m_input - start);
+			return true;
+		}
+	}
+
+	else {
+		int nr = sDigit.match(m_input);
+		if (nr > 0) {
+			m_input += nr;
+			*tree = new Tree("NUMBER", start, m_input - start);
+			return true;
+		}
+	}
+
+	return false;
 }
 
+//"{" SFUNCTIONS "}"
 bool SceneParser::SBODY(Tree** tree) {
+	Tree *child1, *child2, *child3;
+	char *start = m_input;
 
+	if (TERM("{", &child1) && SFUNCTIONS(&child2) && TERM("}", &child3)) {
+		*tree = new Tree("SBODY", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child3);
+		return true;
+	}
+	return false;
 }
-
+// SFUNCTIONS:	"Mesh(" STRING ")" SFUNCTIONS | EMPTY
 bool SceneParser::SFUNCTIONS(Tree** tree) {
-
+	Tree *child1, *child2, *child3;
+	char* start = m_input;
+	if (TERM("Mesh(", &child1) && STRING(&child2) && SFUNCTIONS(&child3)) {
+		*tree = new Tree("SFUNCTIONS", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child3);
+	}
+	return true;
 }
 
 /*bool SceneParser::FIELDSEP(Tree **result) {  // FIELDSEP : "," | ";"
