@@ -46,28 +46,104 @@ bool SceneParser::FUNCTION(Tree** tree) {
 	return false;
 }
 
-bool SceneParser::MESH(Tree** tree) {
+bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
+	Tree* child1;
+	Tree* child2;
+	Tree* child3;
+	Tree* child4;
+	char* start = m_input;
 
+	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")", &child3) && MBODY(&child4)) {
+		*tree = new Tree("MESH", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child3);
+		(*tree)->m_children.push_back(child4);
+
+		return true;
+	}
+
+	return false;
 }
 
 bool SceneParser::TEXTURE(Tree** tree) {
+	
 
 }
 
-bool SceneParser::SCENE(Tree** tree) {
+bool SceneParser::SCENE(Tree** tree) {// SCENE:	"Scene()" SBODY
+	Tree* child1;
+	Tree* child2;
+	char* start = m_input;
 
+	if (TERM("Scene()", &child1) && SBODY(&child2)) {
+		*tree = new Tree("SCENE", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+
+		return true;
+	}
+
+	return false;
 }
 
-bool SceneParser::MBODY(Tree** tree) {
+bool SceneParser::MBODY(Tree** tree) {// MBODY:	"{" TRIANGLES "}"
+	Tree* child1;
+	Tree* child2;
+	Tree* child3;
+	char* start = m_input;
 
+	if (TERM("{", &child1) && TRIANGLES(&child2) && TERM("}")) {
+		*tree = new Tree("MBODY", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child3);
+
+		return true;
+	}
+
+	return false;
 }
 
-bool SceneParser::TRIANGLES(Tree** tree) {
+bool SceneParser::TRIANGLES(Tree** tree) {// TRIANGLES:	TRIANGLE*
+	Tree* child;
+	std::list<Tree*> list;
+	char* start = m_input;
 
+	while (TRIANGLE(&child)) {
+		list.push_back(child);
+	}
+
+	if (list.size() > 0) {
+		*tree = new Tree("TRIANGLES", start, m_input - start);
+		(*tree)->m_children = list;
+	}
+
+	return true;
 }
 
-bool SceneParser::TRIANGLE(Tree** tree) {
+bool SceneParser::TRIANGLE(Tree** tree) {// TRIANGLE:	VECTOR3 "," VECTOR3 "," VECTOR3 TSEPERATOR
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	Tree* child4 = nullptr;
+	Tree* child5 = nullptr;
+	Tree* child6 = nullptr;
+	char* start = m_input;
 
+	if (VECTOR3(&child1) && TERM(",", &child2) && VECTOR3(&child3) && TERM(",", &child4) && VECTOR3(&child5) && TSEPERATOR(&child6)) {
+		*tree = new Tree("TRIANGLE", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child3);
+		(*tree)->m_children.push_back(child4);
+		(*tree)->m_children.push_back(child5);
+		(*tree)->m_children.push_back(child6);
+
+		return true;
+	}
+
+	return false;
 }
 
 bool SceneParser::VECTOR3(Tree** tree) {
