@@ -103,6 +103,11 @@ void App::destroyScene()
 {
 	m_smgr->getRootSceneNode()->removeAll();
 
+	const irr::scene::ISceneNodeList& list = m_smgr->getRootSceneNode()->getChildren();
+	for (auto e : list) {
+		e->remove();
+
+	}
 }
 
 App::App()
