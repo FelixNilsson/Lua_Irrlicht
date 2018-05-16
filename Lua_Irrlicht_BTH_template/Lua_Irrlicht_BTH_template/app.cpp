@@ -239,7 +239,7 @@ int App::addMesh(lua_State * L)
 int App::addBox(lua_State * L)
 {
 	irr::core::vector3df ori;
-	int size;
+	float size;
 	std::string name;
 	bool correct = false;
 
