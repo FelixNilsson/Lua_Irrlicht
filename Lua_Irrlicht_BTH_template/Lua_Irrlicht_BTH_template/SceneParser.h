@@ -38,9 +38,7 @@ private:
 	bool SFUNCTIONS(Tree** tree);
 
 	bool TERM(const char *lit, Tree** = nullptr);
-	bool EXPR(Tree** = nullptr);
-	bool OP(Tree** = nullptr);
-	bool NUM(Tree** = nullptr);
+	//bool NUM(Tree** = nullptr);
 	//bool TABLE2(Tree** = nullptr);
 	//bool LIST(Tree** = nullptr);
 	bool WORD(Tree** = nullptr);

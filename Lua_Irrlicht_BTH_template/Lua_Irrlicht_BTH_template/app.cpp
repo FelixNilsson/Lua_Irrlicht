@@ -1,4 +1,5 @@
 #include "app.h"
+#include "SceneParser.h"
 #include <iostream>
 #include <path.h>
 #include <string>
@@ -434,6 +435,8 @@ int App::loadScene(lua_State* L) {
 	std::stringstream buffer;
 	buffer << t.rdbuf();
 	t.close();
+
+	SceneParser parser(&buffer.str()[0]);
 
 	return 0;
 }

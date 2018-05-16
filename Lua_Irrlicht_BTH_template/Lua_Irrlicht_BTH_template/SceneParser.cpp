@@ -1,42 +1,65 @@
 #include "SceneParser.h"
+#include <iostream>
 
-// FILE:		FUNCTION FILE | EMPTY
-
+// FILE:		FUNCTION*
 // FUNCTION:	MESH | TEXTURE | SCENE
 // MESH:		"Mesh(" STRING ")" MBODY
-// MBODY:		"{" TRIANGLES "}"
+// MBODY:		"\n{\n" TRIANGLES "}\n"
 // TRIANGLES:	TRIANGLE*
-// TRIANGLE:	VECTOR3 "," VECTOR3 "," VECTOR3 TSEPERATOR
+// TRIANGLE:	VECTOR3 ",\n" VECTOR3 ",\n" VECTOR3 TSEPERATOR
 // VECTOR3:		"(" NUMBER "," NUMBER "," NUMBER ")"
-// TSEPERATOR:	",\n" TRIANGLE | EMPTY
+// TSEPERATOR:	",\n" TRIANGLE | "\n"
 // NUMBER:		"-" [0-9]* | [0-9]*
 // SCENE:		"Scene()" SBODY
-// SBODY:		"{" SFUNCTIONS "}"
-// SFUNCTIONS:	"Mesh(" STRING ")" SFUNCTIONS | EMPTY
+// SBODY:		"\n{\n" SFUNCTIONS "}"
+// SFUNCTIONS:	"Mesh(" STRING ")\n" SFUNCTIONS | EMPTY
 // STRING:		'\"' [a-z]+ '\"'
 
 SceneParser::SceneParser(char* input) : m_input(input), digit("0123456789"), hex("0123456789abcdefABCDEF"), nonzero("123456789"), dot("."),
 letters("QWERTYUIOPASDFGHJKLMNBVCXZqwertyuiopasdfghjklzxcvbnm"), sDigit(&digit), number({ &nonzero, &sDigit }), zero("0"), x("x"), sHex(&hex),
 hexnumber({ &zero, &x, &hex, &sHex }), sLetters(&letters), word({ &letters, &sLetters }) {
+	if (FILE(&root)) {
+		root->dump();
+	}
+	else
+		std::cout << "Wrong with parsing" << std::endl;
+
 }
 
 
 SceneParser::~SceneParser() {
 }
 
-bool SceneParser::FILE(Tree** tree) {
-	Tree* child1, *child2;
+bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION*
+	/*Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
 	char* start = m_input;
 	if (FUNCTION(&child1) && FILE(&child2)) {
 		*tree = new Tree("FILE", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
+		if (child2)
+			(*tree)->m_children.push_back(child2);
 	}
+	*/
+	Tree* child = nullptr;
+	std::list<Tree*> list;
+	char* start = m_input;
+	while (FUNCTION(&child)) {
+		list.push_back(child);
+	}
+	if (list.size() > 0) {
+		*tree = new Tree("FILE", start, m_input - start);
+		(*tree)->m_children = list;
+	}
+	if (*m_input != '\0') {
+		std::cout << "Warning bad file format" << std::endl;
+	}
+
 	return true;
 }
 
 bool SceneParser::FUNCTION(Tree** tree) {
-	Tree *child;
+	Tree *child = nullptr;
 	char* start = m_input;
 	if (MESH(&child) || TEXTURE(&child) || SCENE(&child)) {
 		*tree = new Tree("FUNCTION", start, m_input - start);
@@ -47,10 +70,10 @@ bool SceneParser::FUNCTION(Tree** tree) {
 }
 
 bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
-	Tree* child1;
-	Tree* child2;
-	Tree* child3;
-	Tree* child4;
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	Tree* child4 = nullptr;
 	char* start = m_input;
 
 	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")", &child3) && MBODY(&child4)) {
@@ -69,12 +92,12 @@ bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
 bool SceneParser::TEXTURE(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER ")"
 	
 	
-
+	return false;
 }
 
 bool SceneParser::SCENE(Tree** tree) {// SCENE:	"Scene()" SBODY
-	Tree* child1;
-	Tree* child2;
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
 	char* start = m_input;
 
 	if (TERM("Scene()", &child1) && SBODY(&child2)) {
@@ -88,13 +111,13 @@ bool SceneParser::SCENE(Tree** tree) {// SCENE:	"Scene()" SBODY
 	return false;
 }
 
-bool SceneParser::MBODY(Tree** tree) {// MBODY:	"{" TRIANGLES "}"
-	Tree* child1;
-	Tree* child2;
-	Tree* child3;
+bool SceneParser::MBODY(Tree** tree) {// MBODY:	"\n{\n" TRIANGLES "}\n"
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
 	char* start = m_input;
 
-	if (TERM("{", &child1) && TRIANGLES(&child2) && TERM("}")) {
+	if (TERM("\n{\n", &child1) && TRIANGLES(&child2) && TERM("}\n", &child3)) {
 		*tree = new Tree("MBODY", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
@@ -107,7 +130,7 @@ bool SceneParser::MBODY(Tree** tree) {// MBODY:	"{" TRIANGLES "}"
 }
 
 bool SceneParser::TRIANGLES(Tree** tree) {// TRIANGLES:	TRIANGLE*
-	Tree* child;
+	Tree* child = nullptr;
 	std::list<Tree*> list;
 	char* start = m_input;
 
@@ -123,7 +146,7 @@ bool SceneParser::TRIANGLES(Tree** tree) {// TRIANGLES:	TRIANGLE*
 	return true;
 }
 
-bool SceneParser::TRIANGLE(Tree** tree) {// TRIANGLE:	VECTOR3 "," VECTOR3 "," VECTOR3 TSEPERATOR
+bool SceneParser::TRIANGLE(Tree** tree) {// TRIANGLE:	VECTOR3 ",\n" VECTOR3 ",\n" VECTOR3 TSEPERATOR
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	Tree* child3 = nullptr;
@@ -132,7 +155,7 @@ bool SceneParser::TRIANGLE(Tree** tree) {// TRIANGLE:	VECTOR3 "," VECTOR3 "," VE
 	Tree* child6 = nullptr;
 	char* start = m_input;
 
-	if (VECTOR3(&child1) && TERM(",", &child2) && VECTOR3(&child3) && TERM(",", &child4) && VECTOR3(&child5) && TSEPERATOR(&child6)) {
+	if (VECTOR3(&child1) && TERM(",\n", &child2) && VECTOR3(&child3) && TERM(",\n", &child4) && VECTOR3(&child5) && TSEPERATOR(&child6)) {
 		*tree = new Tree("TRIANGLE", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
@@ -171,7 +194,7 @@ bool SceneParser::VECTOR3(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER ")"
 	return false;
 }
 
-bool SceneParser::TSEPERATOR(Tree** tree) {//",\n" TRIANGLE | EMPTY
+bool SceneParser::TSEPERATOR(Tree** tree) {// TSEPERATOR: ",\n" TRIANGLE | "\n"
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	char* start = m_input;
@@ -180,13 +203,21 @@ bool SceneParser::TSEPERATOR(Tree** tree) {//",\n" TRIANGLE | EMPTY
 		*tree = new Tree("TSEPERATOR", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
+		return true;
 	}
-	return true;
+	if (TERM("\n", &child1)) {
+		*tree = new Tree("TSEPERATOR", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+
+		return true;
+	}
+
+	return false;
 }
 
 bool SceneParser::NUMBER(Tree** tree) {//"-"[0 - 9] * | [0 - 9] *
 	char *start = m_input;
-	Tree *child;
+	Tree *child = nullptr;
 
 	if (TERM("-", &child)) {
 		int nr = sDigit.match(m_input);
@@ -210,11 +241,13 @@ bool SceneParser::NUMBER(Tree** tree) {//"-"[0 - 9] * | [0 - 9] *
 }
 
 
-bool SceneParser::SBODY(Tree** tree) {//"{" SFUNCTIONS "}"
-	Tree *child1, *child2, *child3;
+bool SceneParser::SBODY(Tree** tree) {// SBODY:	"\n{\n" SFUNCTIONS "}"
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
 	char *start = m_input;
 
-	if (TERM("{", &child1) && SFUNCTIONS(&child2) && TERM("}", &child3)) {
+	if (TERM("\n{\n", &child1) && SFUNCTIONS(&child2) && TERM("}", &child3)) {
 		*tree = new Tree("SBODY", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
@@ -224,14 +257,19 @@ bool SceneParser::SBODY(Tree** tree) {//"{" SFUNCTIONS "}"
 	return false;
 }
 
-bool SceneParser::SFUNCTIONS(Tree** tree) { // SFUNCTIONS:	"Mesh(" STRING ")" SFUNCTIONS | EMPTY
-	Tree *child1, *child2, *child3;
+bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: "Mesh(" STRING ")\n" SFUNCTIONS | EMPTY
+	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
 	char* start = m_input;
-	if (TERM("Mesh(", &child1) && STRING(&child2) && SFUNCTIONS(&child3)) {
+	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")\n", &child3) && SFUNCTIONS(&child4)) {
 		*tree = new Tree("SFUNCTIONS", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
-		(*tree)->m_children.push_back(child3);
+		if (child1)
+			(*tree)->m_children.push_back(child1);
+		if (child2)
+			(*tree)->m_children.push_back(child2);
+		if (child3)
+			(*tree)->m_children.push_back(child3);
+		if (child4)
+			(*tree)->m_children.push_back(child4);
 	}
 	return true;
 }
@@ -327,9 +365,9 @@ bool SceneParser::WORD(Tree** tree) {
 }
 
 bool SceneParser::STRING(Tree** tree) {
-	Tree* child1;
-	Tree* child2;
-	Tree* child3;
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
 	char* start = m_input;
 
 	if (TERM("\"", &child1) && WORD(&child2) && TERM("\"", &child3)) {
@@ -421,16 +459,6 @@ bool SceneParser::TERM(const char *lit, Tree** tree)
 	*tree = new Tree("TERM", start, m_input - start);
 
 	return true;
-}
-
-bool SceneParser::EXPR(Tree** tree) {
-	return (NUM() && OP() && NUM())
-		|| (TERM("(") && EXPR() && TERM(")"));
-}
-
-bool SceneParser::OP(Tree** tree) {
-	return (TERM("+") || TERM("-") ||
-		TERM("/") || TERM("*"));
 }
 
 /*bool SceneParser::NUM(Tree** tree) {
