@@ -86,14 +86,14 @@
     <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\x64;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)Obj/x64/$(ProjectName)/$(Configuration)/</IntDir>
-    <OutDir>$(SolutionDir)Lua_Irrlicht_BTH_template</OutDir>
+    <OutDir>$(SolutionDir)Bin\x64</OutDir>
     <TargetName>$(ProjectName)D</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <IncludePath>$(SolutionDir)include;$(IncludePath)</IncludePath>
     <LibraryPath>$(SolutionDir)lib\x64;$(LibraryPath)</LibraryPath>
     <IntDir>$(SolutionDir)Obj/x64/$(ProjectName)/$(Configuration)/</IntDir>
-    <OutDir>$(SolutionDir)Lua_Irrlicht_BTH_template</OutDir>
+    <OutDir>$(SolutionDir)Bin\x64</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
