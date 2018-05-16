@@ -13,7 +13,12 @@
 #include <irrlicht.h>
 #include "app.h"
 
-#include <crtdbg.h> 
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#ifdef _DEBUG
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
+#endif 
 
 void ConsoleThread(lua_State* L) {
 	char command[1000];
@@ -28,7 +33,7 @@ void ConsoleThread(lua_State* L) {
 
 int main()
 {
-	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+	//_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
 	
 	App app;
 	std::thread conThread(ConsoleThread, app.getLuaState());
@@ -62,7 +67,8 @@ int main()
 	while(app.run()) {
 		app.draw();	
 	}
-
+	std::cout << new int << std::endl;
+	_CrtDumpMemoryLeaks();
 	//device->drop();
 	//conThread.detach();
 	conThread.join();

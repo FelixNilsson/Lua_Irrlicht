@@ -6,6 +6,13 @@
 #include <fstream>
 #include <sstream>
 
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#ifdef _DEBUG
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
+#endif 
+
 using namespace irr;
 using namespace scene;
 using namespace core;
@@ -112,6 +119,7 @@ void App::destroyScene()
 
 App::App()
 {
+	std::cout << new int << std::endl;
 	m_device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
 
 	if (!m_device) {
