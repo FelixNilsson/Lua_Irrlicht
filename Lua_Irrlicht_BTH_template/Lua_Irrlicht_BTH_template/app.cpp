@@ -101,10 +101,10 @@ irr::scene::ISceneNode* App::getSceneNode(std::string nodeName)
 
 void App::destroyScene()
 {
-	m_smgr->getRootSceneNode()->removeAll();
-
 	const irr::scene::ISceneNodeList& list = m_smgr->getRootSceneNode()->getChildren();
 	for (auto e : list) {
+		auto s = e->getType();
+		if (s != ESNT_CAMERA)
 		e->remove();
 
 	}
