@@ -5,9 +5,11 @@
 // FUNCTION:	MESH | TEXTURE | SCENE
 // MESH:		"Mesh(" STRING ")" MBODY
 // MBODY:		"\n{\n" TRIANGLES "}\n"
-// TRIANGLES:	TRIANGLE*
+// TRIANGLES:	TRIANGLE* | TRIANGLE5*
 // TRIANGLE:	VECTOR3 ",\n" VECTOR3 ",\n" VECTOR3
+// TRIANGLE5:	VECTOR5 ",\n" VECTOR5 ",\n" VECTOR5
 // VECTOR3:		"(" NUMBER "," NUMBER "," NUMBER ")"
+// VECTOR5:		"(" NUMBER "," NUMBER "," NUMBER "," NUMBER "," NUMBER")"
 // NUMBER:		"-" [0-9]* | [0-9]*
 // SCENE:		"Scene()" SBODY
 // SBODY:		"\n{\n" SFUNCTIONS* "}"
@@ -350,13 +352,22 @@ bool SceneParser::MBODY(Tree** tree) {// MBODY:	"\n{\n" TRIANGLES "}\n"
 	return false;
 }
 
-bool SceneParser::TRIANGLES(Tree** tree) {// TRIANGLES:	TRIANGLE*
+bool SceneParser::TRIANGLES(Tree** tree) {// TRIANGLES:	TRIANGLE* | TRIANGLE5*
 	Tree* child = nullptr;
 	std::list<Tree*> list;
 	char* start = m_input;
 	bool comma = true;
 
 	while (TRIANGLE(&child)) {
+		list.push_back(child);
+
+		if (!TERM(",\n", &child)) {
+			comma = false;
+			break;
+		}
+	}
+
+	while (TRIANGLE5(&child)) {
 		list.push_back(child);
 
 		if (!TERM(",\n", &child)) {
@@ -399,6 +410,28 @@ bool SceneParser::TRIANGLE(Tree** tree) {// TRIANGLE:	VECTOR3 ",\n" VECTOR3 ",\n
 	return false;
 }
 
+bool SceneParser::TRIANGLE5(Tree** tree) {//VECTOR5 ",\n" VECTOR5 ",\n" VECTOR5
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	Tree* child4 = nullptr;
+	Tree* child5 = nullptr;
+	char* start = m_input;
+
+	if (VECTOR5(&child1) && TERM(",\n", &child2) && VECTOR5(&child3) && TERM(",\n", &child4) && VECTOR5(&child5)) {
+		*tree = new Tree("TRIANGLE", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		//(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child3);
+		//(*tree)->m_children.push_back(child4);
+		(*tree)->m_children.push_back(child5);
+
+		return true;
+	}
+
+	return false;
+}
+
 bool SceneParser::VECTOR3(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER ")"
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
@@ -417,6 +450,36 @@ bool SceneParser::VECTOR3(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER ")"
 		//(*tree)->m_children.push_back(child5);
 		(*tree)->m_children.push_back(child6);
 		//(*tree)->m_children.push_back(child7);
+
+		return true;
+	}
+	m_input = start; //do we need this i think important yes very important
+	return false;
+}
+
+bool SceneParser::VECTOR5(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER "," NUMBER "," NUMBER")"
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	Tree* child4 = nullptr;
+	Tree* child5 = nullptr;
+	Tree* child6 = nullptr;
+	Tree* child7 = nullptr;
+	Tree* child8 = nullptr;
+	Tree* child9 = nullptr;
+	char* start = m_input;
+
+	if (TERM("(", &child1) && NUMBER(&child2) && TERM(",", &child3) && NUMBER(&child4) && TERM(",", &child5) && NUMBER(&child6) && TERM(",", &child5) && NUMBER(&child7) && TERM(",", &child5) && NUMBER(&child8) && TERM(")", &child9)) {
+		*tree = new Tree("VECTOR3", start, m_input - start);
+		//(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		//(*tree)->m_children.push_back(child3);
+		(*tree)->m_children.push_back(child4);
+		//(*tree)->m_children.push_back(child5);
+		(*tree)->m_children.push_back(child6);
+		//(*tree)->m_children.push_back(child7);
+		(*tree)->m_children.push_back(child7);
+		(*tree)->m_children.push_back(child8);
 
 		return true;
 	}
