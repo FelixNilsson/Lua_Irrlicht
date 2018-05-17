@@ -60,7 +60,9 @@ void SceneParser::buildScene(lua_State* L) const {
 			std::cout << p->m_children.back()->m_lexeme << std::endl;
 			buildMesh(L, p->m_children.back()->m_lexeme);
 		}
-		
+		else if (p->m_children.front()->m_lexeme == "Bind") {
+			std::cout << "bind" << std::endl;
+		}
 		else
 			std::cout << "nay" << std::endl;
 

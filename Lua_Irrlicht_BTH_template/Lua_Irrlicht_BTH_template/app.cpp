@@ -323,10 +323,12 @@ int App::addMesh(lua_State * L)
 
 		for (int i = 0; i < size; i++) {
 			S3DVertex& v = buffer->Vertices[i];
-			v.Pos.set(list[i]);
 			if (isUV) {
 				v.TCoords.set(listUV[i].uv);
 				v.Pos.set(listUV[i].vec);
+			}
+			else {
+				v.Pos.set(list[i]);
 			}
 			buffer->Indices[i] = i;
 		}		
