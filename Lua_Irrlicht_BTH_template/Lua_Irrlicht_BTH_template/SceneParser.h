@@ -25,6 +25,8 @@ private:
 	Seq word;
 private:
 	void buildMesh(lua_State* L, std::string arg) const;
+	void buildTexture(lua_State* L) const;
+	void addTexture(lua_State* L, Tree* tree) const;
 
 	bool FILE(Tree** = nullptr);
 	bool FUNCTION(Tree** = nullptr);

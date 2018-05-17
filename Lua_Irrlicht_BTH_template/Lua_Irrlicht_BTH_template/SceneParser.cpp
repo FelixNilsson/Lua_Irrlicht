@@ -47,6 +47,7 @@ void SceneParser::buildScene(lua_State* L) const {
 	}
 
 	tree = tree->m_children.back();
+	buildTexture(L);
 
 	for (auto p : tree->m_children) {
 
@@ -54,6 +55,7 @@ void SceneParser::buildScene(lua_State* L) const {
 			std::cout << p->m_children.back()->m_lexeme << std::endl;
 			buildMesh(L, p->m_children.back()->m_lexeme);
 		}
+		
 		else
 			std::cout << "nay" << std::endl;
 
@@ -102,6 +104,54 @@ void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 	lua_pcall(L, 1, 0, 0);
 
 	std::cout << "debug\n";
+}
+
+void SceneParser::buildTexture(lua_State* L) const {
+	Tree* tree = nullptr;
+
+	for (auto p : m_root->m_children) {
+		Tree* temp = p->m_children.front();
+		if (temp->m_tag == "TEXTURE") {
+			addTexture(L, temp);
+		}
+	}
+
+
+}
+
+void SceneParser::addTexture(lua_State* L, Tree* tree) const {
+	std::string name = tree->m_children.front()->m_children.front()->m_lexeme;
+	tree = tree->m_children.back()->m_children.front(); //rows
+	
+	
+	std::vector<std::vector<std::vector<int>>> debug_row;
+	lua_getglobal(L, "addTexture");
+	lua_newtable(L);
+	int rowNr = 1;
+	for (auto row : tree->m_children) {
+		lua_newtable(L);
+		int vectorNr = 1;
+		std::vector<std::vector<int>> debug_vector;
+		for (auto vector : row->m_children) {
+			lua_newtable(L);
+			int index = 1;
+			std::vector<int> con;
+			for (auto number : vector->m_children) {
+				con.push_back(std::stoi(number->m_lexeme));
+				lua_pushnumber(L, std::stoi(number->m_lexeme));
+				lua_rawseti(L, -2, index);
+				index++;
+			}
+			debug_vector.push_back(con);
+			lua_rawseti(L, -2, vectorNr);
+			vectorNr++;
+		}
+		debug_row.push_back(debug_vector);
+		lua_rawseti(L, -2, rowNr);
+		rowNr++;
+	}
+	lua_pushstring(L, name.c_str());
+	lua_pcall(L, 2, 0, 0);
 }
 
 bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION*
