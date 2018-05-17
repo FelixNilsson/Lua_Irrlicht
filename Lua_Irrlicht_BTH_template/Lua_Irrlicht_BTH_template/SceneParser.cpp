@@ -11,7 +11,9 @@
 // NUMBER:		"-" [0-9]* | [0-9]*
 // SCENE:		"Scene()" SBODY
 // SBODY:		"\n{\n" SFUNCTIONS* "}"
-// SFUNCTIONS:	"Mesh" "(" STRING ")\n"
+// SFUNCTIONS:	SMESH | BIND
+// SMESH:		"Mesh" "(" STRING ")\n"
+// BIND:		"Bind" "(" STRING ", " SMESH ")\n"
 // STRING:		'\"' [a-z]+ '\"'
 // TEXTURE:		"Texture(" STRING ")\n" TBODY
 // TBODY:		"{\n" ROWS "}\n"
@@ -27,6 +29,7 @@ letters("QWERTYUIOPASDFGHJKLMNBVCXZqwertyuiopasdfghjklzxcvbnm"), sDigit(&digit),
 hexnumber({ &zero, &x, &hex, &sHex }), sLetters(&letters), word({ &letters, &sLetters }) {
 	if (FILE(&m_root)) {
 		m_root->dump();
+		std::cout << "Succes with parsing" << std::endl;
 	}
 	else
 		std::cout << "Wrong with parsing" << std::endl;
@@ -127,6 +130,7 @@ bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION*
 	}
 	if (*m_input != '\0') {
 		std::cout << "Warning bad file format" << std::endl;
+		return false;
 	}
 
 	return true;
@@ -444,11 +448,11 @@ bool SceneParser::SBODY(Tree** tree) {// SBODY:	"\n{\n" SFUNCTIONS* "}"
 	return false;
 }
 
-bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS:	"Mesh" "(" STRING ")\n"
+bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
 	char* start = m_input;
-
-	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")\n", &child3)) {
+	
+	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")\n", &child3)) {// SMESH: "Mesh" "(" STRING ")\n"
 		*tree = new Tree("SFUNCTIONS", start, m_input - start);
 		if (child1)
 			(*tree)->m_children.push_back(child1);
@@ -458,6 +462,16 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS:	"Mesh" "(" STRING ")\n
 			//(*tree)->m_children.push_back(child3);
 			if (child4);
 			//(*tree)->m_children.push_back(child4);
+
+		return true;
+	}
+	else if (TERM("Bind", &child1) && TERM("(", &child2) && STRING(&child3) && TERM(", ", &child2) && TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4) ) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
+		*tree = new Tree("SFUNCTIONS", start, m_input - start);
+
+		
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child3);
+		(*tree)->m_children.push_back(child2);
 
 		return true;
 	}
