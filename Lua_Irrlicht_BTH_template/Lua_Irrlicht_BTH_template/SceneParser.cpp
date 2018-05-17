@@ -12,7 +12,7 @@
 // SCENE:		"Scene()" SBODY
 // SBODY:		"\n{\n" SFUNCTIONS "}"
 // SFUNCTIONS:	"Mesh(" STRING ")\n" SFUNCTIONS | EMPTY
-// SFUNCTIONS:	NAME "(" STRING ")\n" SFUNCTIONS | EMPTY
+// SFUNCTIONS:	(NAME "(" STRING ")\n")*
 // STRING:		'\"' [a-z]+ '\"'
 
 
