@@ -74,6 +74,74 @@ bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 	return isNumber == 3;
 }
 
+bool App::isVectorUV(lua_State * L, vectorUV &vector)
+{
+	//size_t len = lua_rawlen(L,1); ???
+	int isNumber = 0;
+	lua_pushnumber(L, 1);
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		vector.vec.X = lua_tonumber(L, -1);
+		isNumber++;
+	}
+	else {
+		std::cout << "expected a number" << std::endl;
+	}
+	lua_pop(L, 1);
+	lua_pushnumber(L, 2);
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		vector.vec.Y = lua_tonumber(L, -1);
+		isNumber++;
+	}
+	else {
+		std::cout << "expected a number" << std::endl;
+	}
+	lua_pop(L, 1);
+	lua_pushnumber(L, 3);
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		vector.vec.Z = lua_tonumber(L, -1);
+		isNumber++;
+	}
+	else {
+		std::cout << "expected a number" << std::endl;
+	}
+	lua_pop(L, 1);
+	lua_pushnumber(L, 4);
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		vector.uv.X = lua_tonumber(L, -1);
+		isNumber++;
+	}
+	else {
+		std::cout << "expected a number" << std::endl;
+	}
+	lua_pop(L, 1);
+	lua_pushnumber(L, 5);
+	lua_gettable(L, -2);
+	if (lua_isnumber(L, -1)) {
+		vector.uv.Y = lua_tonumber(L, -1);
+		isNumber++;
+	}
+	else {
+		std::cout << "expected a number" << std::endl;
+	}
+
+
+	lua_pop(L, 1);
+	lua_pushnumber(L, 6);
+	if (lua_gettable(L, -2)) {
+		isNumber++;
+		std::cout << "to many arguments in the table" << std::endl;
+	}
+	lua_pop(L, 1);
+	if (isNumber < 5)
+		std::cout << "to few arguments in the table" << std::endl;
+
+	return isNumber == 5;
+}
+
 void App::drawOneFrame()
 {
 	m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
@@ -209,6 +277,7 @@ int App::addMesh(lua_State * L)
 	}
 
 	std::vector<irr::core::vector3df> list;
+	std::vector<vectorUV> listUV;
 	irr::scene::SMesh* mesh = new SMesh();
 	SMeshBuffer* buffer = new SMeshBuffer();
 	mesh->addMeshBuffer(buffer);
@@ -222,9 +291,13 @@ int App::addMesh(lua_State * L)
 	bool error = false;
 	for (int i = 0; i < length && !error; i++) /*((type = lua_geti(L, -1, index)) == LUA_TTABLE)*/ {
 		irr::core::vector3df vec;
+		vectorUV vecUV;
 		lua_geti(L, -1, i + 1);
 		if (isVector(L, vec)) {
 			list.push_back(vec);
+		}
+		else if (isVectorUV(L, vecUV)) {
+			listUV.push_back(vecUV);
 		}
 		else {
 			error = true;
@@ -236,14 +309,25 @@ int App::addMesh(lua_State * L)
 		std::cout << "WARNING!!! bad argument(s)" << std::endl;
 	}
 	else {
-		buffer->Vertices.reallocate(list.size());
-		buffer->Vertices.set_used(list.size());
-		buffer->Indices.reallocate(list.size());
-		buffer->Indices.set_used(list.size());
+		auto size = list.size();
+		bool isUV = false;
+		if (listUV.size() > 0) {
+			size = listUV.size();
+			isUV = true;
+		}
 
-		for (int i = 0; i < list.size(); i++) {
+		buffer->Vertices.reallocate(size);
+		buffer->Vertices.set_used(size);
+		buffer->Indices.reallocate(size);
+		buffer->Indices.set_used(size);
+
+		for (int i = 0; i < size; i++) {
 			S3DVertex& v = buffer->Vertices[i];
 			v.Pos.set(list[i]);
+			if (isUV) {
+				v.TCoords.set(listUV[i].uv);
+				v.Pos.set(listUV[i].vec);
+			}
 			buffer->Indices[i] = i;
 		}		
 		buffer->recalculateBoundingBox();

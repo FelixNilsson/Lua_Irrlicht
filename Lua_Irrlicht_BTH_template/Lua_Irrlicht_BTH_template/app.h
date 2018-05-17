@@ -5,6 +5,10 @@
 #include <vector>
 
 class App {
+	struct vectorUV {
+		irr::core::vector3df vec;
+		irr::core::vector2df uv;
+	};
 private:
 	lua_State * L;
 
@@ -22,6 +26,7 @@ public:
 	
 private:
 	static bool isVector(lua_State * L, irr::core::vector3df &vector);
+	static bool isVectorUV(lua_State * L, vectorUV &vector);
 	static void drawOneFrame();
 	static bool isPowerOfTwo(int nr);
 	static irr::scene::ISceneNode* getSceneNode(std::string nodeName);
