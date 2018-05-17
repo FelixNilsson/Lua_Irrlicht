@@ -461,6 +461,7 @@ int App::loadScene(lua_State* L) {
 	SceneParser parser(&buffer.str()[0]);
 
 	destroyScene();
+	parser.buildScene(L);
 
 	return 0;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <lua.hpp>
 #include "Regex.h"
 #include "Tree.h"
 
@@ -7,7 +8,7 @@ class SceneParser
 {
 private:
 	char* m_input;
-	Tree* root;
+	Tree* m_root;
 
 	CharClass digit;
 	CharClass hex;
@@ -52,5 +53,7 @@ private:
 public:
 	SceneParser(char*);
 	~SceneParser();
+
+	void buildScene(lua_State* L) const;
 };
 
