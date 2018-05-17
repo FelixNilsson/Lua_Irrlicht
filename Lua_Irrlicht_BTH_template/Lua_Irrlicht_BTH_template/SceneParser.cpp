@@ -62,6 +62,13 @@ void SceneParser::buildScene(lua_State* L) const {
 		}
 		else if (p->m_children.front()->m_lexeme == "Bind") {
 			std::cout << "bind" << std::endl;
+			std::list<Tree*>::iterator it = p->m_children.end();
+			it--;
+			lua_getglobal(L, "bind");
+			lua_pushstring(L, (*it)->m_lexeme.c_str());
+			it--;
+			lua_pushstring(L, (*it)->m_children.front()->m_lexeme.c_str());
+			lua_pcall(L, 2, 0, 0);
 		}
 		else
 			std::cout << "nay" << std::endl;
@@ -108,7 +115,8 @@ void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 			index1++;
 		}
 	}
-	lua_pcall(L, 1, 0, 0);
+	lua_pushstring(L, arg.c_str());
+	lua_pcall(L, 2, 0, 0);
 
 	std::cout << "debug\n";
 }

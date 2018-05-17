@@ -266,16 +266,28 @@ void App::draw()
 int App::addMesh(lua_State * L)
 {
 	int size = lua_gettop(L);
+	std::string name;
 
-	if (size != 1) {
+	if (size < 1 || size > 2) {
 		std::cout << "To wrong arguments" << std::endl;
 		return 0;
 	}
-	else if (!lua_istable(L, -1)) {
-		std::cout << "expects a table" << std::endl;
-		return 0;
+	else if (size == 1) {
+		if (!lua_istable(L, -1)) {
+			std::cout << "expects a table" << std::endl;
+			return 0;
+		}
+		name = "mesh" + std::to_string(m_id);
 	}
-
+	else if (size == 2) {
+		if (!lua_istable(L, -2) && lua_type(L, -1) != LUA_TSTRING) {
+			std::cout << "expects a table and a string" << std::endl;
+			return 0;
+		}
+		name = lua_tostring(L, -1);
+		lua_pop(L, 1);
+	}
+	
 	std::vector<irr::core::vector3df> list;
 	std::vector<vectorUV> listUV;
 	irr::scene::SMesh* mesh = new SMesh();
@@ -309,6 +321,7 @@ int App::addMesh(lua_State * L)
 		std::cout << "WARNING!!! bad argument(s)" << std::endl;
 	}
 	else {
+		m_id++;
 		auto size = list.size();
 		bool isUV = false;
 		if (listUV.size() > 0) {
@@ -335,6 +348,7 @@ int App::addMesh(lua_State * L)
 		buffer->recalculateBoundingBox();
 		auto p = m_smgr->addMeshSceneNode(mesh);
 		p->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
+		p->setName(irr::core::string<char*>(name.c_str()));
 		m_meshes.push_back(p);
 	}
 	//std::cout << "added elements: " << index - 1 << std::endl;
