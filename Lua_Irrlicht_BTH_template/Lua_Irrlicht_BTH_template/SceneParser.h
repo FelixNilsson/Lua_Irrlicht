@@ -40,7 +40,9 @@ private:
 	bool MBODY(Tree** tree);
 	bool TRIANGLES(Tree** tree);
 	bool TRIANGLE(Tree** tree);
+	bool TRIANGLE5(Tree** tree);
 	bool VECTOR3(Tree** tree);
+	bool VECTOR5(Tree** tree);
 	bool TSEPERATOR(Tree** tree);
 	bool NUMBER(Tree** tree);
 	bool SBODY(Tree** tree);
