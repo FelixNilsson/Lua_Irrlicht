@@ -10,10 +10,14 @@
 // VECTOR3:		"(" NUMBER "," NUMBER "," NUMBER ")"
 // NUMBER:		"-" [0-9]* | [0-9]*
 // SCENE:		"Scene()" SBODY
-// SBODY:		"\n{\n" SFUNCTIONS "}"
-// SFUNCTIONS:	"Mesh(" STRING ")\n" SFUNCTIONS | EMPTY
-// SFUNCTIONS:	(NAME "(" STRING ")\n")*
+// SBODY:		"\n{\n" SFUNCTIONS* "}"
+// SFUNCTIONS:	"Mesh" "(" STRING ")\n"
 // STRING:		'\"' [a-z]+ '\"'
+// TEXTURE:		"Texture(" STRING ")\n" TBODY
+// TBODY:		"{\n" ROWS "}\n"
+// ROWS:		ROW*
+// ROW:			(VECTOR3 "," VECTOR3)* RSEPERATOR
+// RSEPERATOR:	",\n" (ROW | EMPTY) | "\n"
 
 
 // TSEPERATOR:	",\n" TRIANGLE | "\n" UNUSED
@@ -43,8 +47,61 @@ void SceneParser::buildScene(lua_State* L) const {
 	}
 
 	tree = tree->m_children.back();
+
+	for (auto p : tree->m_children) {
+
+		if (p->m_children.front()->m_lexeme == "Mesh") {
+			std::cout << p->m_children.back()->m_lexeme << std::endl;
+			buildMesh(L, p->m_children.back()->m_lexeme);
+		}
+		else
+			std::cout << "nay" << std::endl;
+
+
+		std::cout << p->m_lexeme << std::endl;
+	}
+
 	tree = tree->m_children.back();
 
+}
+
+void SceneParser::buildMesh(lua_State* L, std::string arg) const {
+	Tree* tree = nullptr;
+
+	for (auto p : m_root->m_children) {
+		Tree* temp = p->m_children.front();
+		if (temp->m_tag == "MESH" && (temp->m_children.front()->m_lexeme == arg)) {
+			tree = temp->m_children.back();
+			break;
+		}
+	}
+
+	if (!tree)
+		return;
+
+	tree = tree->m_children.front();
+	// loop over all triangles
+	//std::vector<int> con;
+	lua_getglobal(L, "addMesh");
+	lua_newtable(L);
+	int index1 = 1;
+	for (auto p : tree->m_children) {
+		for (auto vector : p->m_children) {
+			lua_newtable(L);
+			int index2 = 1;
+			for (auto number : vector->m_children) {
+				//con.push_back(std::stoi(number->m_lexeme));
+				lua_pushnumber(L, std::stoi(number->m_lexeme));
+				lua_rawseti(L, -2, index2);
+				index2++;
+			}
+			lua_rawseti(L, -2, index1);
+			index1++;
+		}
+	}
+	lua_pcall(L, 1, 0, 0);
+
+	std::cout << "debug\n";
 }
 
 bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION*
@@ -106,9 +163,102 @@ bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
 	return false;
 }
 
-bool SceneParser::TEXTURE(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER ")"
+bool SceneParser::TEXTURE(Tree** tree) {// TEXTURE:	"Texture(" STRING ")\n" TBODY
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
 	
-	
+	char* start = m_input;
+
+	if (TERM("Texture(", &child1) && STRING(&child1) && TERM(")\n", &child2) && TBODY(&child2)) {
+		*tree = new Tree("TEXTURE", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool SceneParser::TBODY(Tree** tree) {// TBODY:	"{\n" ROWS "}\n"
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	char* start = m_input;
+
+	if (TERM("{\n", &child1) && ROWS(&child2) && TERM("}\n", &child3)) {
+		*tree = new Tree("TBODY", start, m_input - start);
+		//(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool SceneParser::ROWS(Tree** tree) {// ROWS: ROW*
+	Tree* child = nullptr;
+	std::list<Tree*> list;
+	char* start = m_input;
+	//bool comma = true;
+
+	while (ROW(&child)) {
+		list.push_back(child);
+		
+		if (!TERM(",\n", &child)) {
+			//comma = false;
+			break;
+		}
+	}
+
+	if (!TERM("\n", &child)) {
+		return false;
+	}
+
+	if (list.size() > 0) {
+		*tree = new Tree("ROWS", start, m_input - start);
+		(*tree)->m_children = list;
+	}
+
+	return true;
+}
+
+bool SceneParser::ROW(Tree** tree) {
+	Tree* child = nullptr;
+	std::list<Tree*> list;
+	char* start = m_input;
+	bool comma = true;
+
+	while (VECTOR3(&child)) {
+		list.push_back(child);
+
+		if (!TERM(", ", &child)) {
+			break;
+		}
+	}
+
+	if (list.size() > 0) {
+		*tree = new Tree("ROW", start, m_input - start);
+		(*tree)->m_children = list;
+	}
+
+	return true;
+}
+
+bool SceneParser::ROWLAST(Tree** tree) {
+	/*Tree* child = nullptr;
+	char* start = m_input;
+
+	while (VECTOR3(&child)) {
+		list.push_back(child);
+
+		if (!TERM(", ", &child)) {
+			break;
+		}
+	}
+
+	*/
 	return false;
 }
 
@@ -266,37 +416,53 @@ bool SceneParser::NUMBER(Tree** tree) {//"-"[0 - 9] * | [0 - 9] *
 }
 
 
-bool SceneParser::SBODY(Tree** tree) {// SBODY:	"\n{\n" SFUNCTIONS "}"
+bool SceneParser::SBODY(Tree** tree) {// SBODY:	"\n{\n" SFUNCTIONS* "}"
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	Tree* child3 = nullptr;
 	char *start = m_input;
 
-	if (TERM("\n{\n", &child1) && SFUNCTIONS(&child2) && TERM("}", &child3)) {
-		*tree = new Tree("SBODY", start, m_input - start);
+	if (TERM("\n{\n", &child1)) {
+		std::list<Tree*> list;
+
+		while (SFUNCTIONS(&child2)) {
+			list.push_back(child2);
 		//(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
+		//(*tree)->m_children.push_back(child2);
 		//(*tree)->m_children.push_back(child3);
-		return true;
+		}
+
+		if (TERM("}", &child3)) {
+
+			*tree = new Tree("SBODY", start, m_input - start);
+			(*tree)->m_children = list;
+			return true;
+		}
+
+		return false;
 	}
 	return false;
 }
 
-bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: "Mesh(" STRING ")\n" SFUNCTIONS | EMPTY
+bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS:	"Mesh" "(" STRING ")\n"
 	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
 	char* start = m_input;
-	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")\n", &child3) && SFUNCTIONS(&child4)) {
+
+	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")\n", &child3)) {
 		*tree = new Tree("SFUNCTIONS", start, m_input - start);
 		if (child1)
-			//(*tree)->m_children.push_back(child1);
+			(*tree)->m_children.push_back(child1);
 		if (child2)
 			(*tree)->m_children.push_back(child2);
 		if (child3)
 			//(*tree)->m_children.push_back(child3);
-		if (child4)
-			(*tree)->m_children.push_back(child4);
+			if (child4);
+			//(*tree)->m_children.push_back(child4);
+
+		return true;
 	}
-	return true;
+
+	return false;
 }
 
 /*bool SceneParser::FIELDSEP(Tree **result) {  // FIELDSEP : "," | ";"

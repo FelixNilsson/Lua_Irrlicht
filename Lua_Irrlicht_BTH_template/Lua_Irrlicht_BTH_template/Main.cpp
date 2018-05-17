@@ -67,7 +67,6 @@ int main()
 	while(app.run()) {
 		app.draw();	
 	}
-	std::cout << new int << std::endl;
 	_CrtDumpMemoryLeaks();
 	//device->drop();
 	//conThread.detach();

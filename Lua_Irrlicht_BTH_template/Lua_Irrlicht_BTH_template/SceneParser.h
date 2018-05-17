@@ -24,10 +24,16 @@ private:
 	Star sLetters;
 	Seq word;
 private:
+	void buildMesh(lua_State* L, std::string arg) const;
+
 	bool FILE(Tree** = nullptr);
 	bool FUNCTION(Tree** = nullptr);
 	bool MESH(Tree** = nullptr);
 	bool TEXTURE(Tree** = nullptr);
+	bool TBODY(Tree** tree);
+	bool ROWS(Tree** tree);
+	bool ROW(Tree** tree);
+	bool ROWLAST(Tree** tree);
 	bool SCENE(Tree** = nullptr);
 	bool MBODY(Tree** tree);
 	bool TRIANGLES(Tree** tree);
@@ -55,5 +61,6 @@ public:
 	~SceneParser();
 
 	void buildScene(lua_State* L) const;
+
 };
 

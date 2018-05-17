@@ -472,7 +472,7 @@ lua_State * App::getLuaState()
 }
 
 void App::setupScript() {
-	if (luaL_dofile(L, "setup.lua")) {
+	if (luaL_dofile(L, "setup2.lua")) {
 		std::cout << "Couldn't load script" << std::endl;
 		return;
 	}
