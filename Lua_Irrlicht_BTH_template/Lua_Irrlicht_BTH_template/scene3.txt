@@ -1,0 +1,8 @@
+Mesh("bumpycyc")
+Lua(<
+addBox({0,0,0}, 10)
+>)
+Scene()
+{
+Mesh("bumpycyc")
+}

@@ -36,6 +36,9 @@ private:
 	bool ROWS(Tree** tree);
 	bool ROW(Tree** tree);
 	bool ROWLAST(Tree** tree);
+	bool LUA(Tree** tree);
+	bool LBODY(Tree** tree);
+	bool CODE(Tree** tree);
 	bool SCENE(Tree** = nullptr);
 	bool MBODY(Tree** tree);
 	bool TRIANGLES(Tree** tree);

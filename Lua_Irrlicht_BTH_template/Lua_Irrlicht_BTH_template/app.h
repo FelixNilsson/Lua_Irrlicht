@@ -44,5 +44,7 @@ public:
 	static int addTexture(lua_State* L);
 	static int bind(lua_State* L);
 	static int loadScene(lua_State* L);
+	static int test(lua_State* L);
+	static int test1(lua_State* L);
 	lua_State* getLuaState();
 };

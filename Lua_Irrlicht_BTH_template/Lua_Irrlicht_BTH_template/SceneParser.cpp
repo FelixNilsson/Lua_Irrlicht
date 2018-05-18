@@ -1,8 +1,8 @@
 #include "SceneParser.h"
 #include <iostream>
 
-// FILE:		FUNCTION*
-// FUNCTION:	MESH | TEXTURE | SCENE
+// FILE:		FUNCTION* | SCENE
+// FUNCTION:	MESH | LUA | TEXTURE 
 // MESH:		"Mesh(" STRING ")" MBODY
 // MBODY:		"\n{\n" TRIANGLES "}\n"
 // TRIANGLES:	TRIANGLE* | TRIANGLE5*
@@ -22,6 +22,9 @@
 // ROWS:		ROW*
 // ROW:			(VECTOR3 "," VECTOR3)* RSEPERATOR
 // RSEPERATOR:	",\n" (ROW | EMPTY) | "\n"
+// LUA:			"Mesh(" STRING ")\n" LBODY
+// LBODY:		"Lua(<\n" CODE ">)\n"
+// CODE:		[^">)"]*
 
 
 // TSEPERATOR:	",\n" TRIANGLE | "\n" UNUSED
@@ -169,7 +172,7 @@ void SceneParser::addTexture(lua_State* L, Tree* tree) const {
 	lua_pcall(L, 2, 0, 0);
 }
 
-bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION*
+bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* | SCENE
 	/*Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	char* start = m_input;
@@ -186,6 +189,10 @@ bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION*
 	while (FUNCTION(&child)) {
 		list.push_back(child);
 	}
+	if (SCENE(&child)) {
+		list.push_back(child);
+	}
+
 	if (list.size() > 0) {
 		*tree = new Tree("FILE", start, m_input - start);
 		(*tree)->m_children = list;
@@ -198,10 +205,10 @@ bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION*
 	return true;
 }
 
-bool SceneParser::FUNCTION(Tree** tree) {
+bool SceneParser::FUNCTION(Tree** tree) {// FUNCTION: MESH | LUA | TEXTURE 
 	Tree *child = nullptr;
 	char* start = m_input;
-	if (MESH(&child) || TEXTURE(&child) || SCENE(&child)) {
+	if (MESH(&child) || TEXTURE(&child) || LUA(&child)) {
 		*tree = new Tree("FUNCTION", start, m_input - start);
 		(*tree)->m_children.push_back(child);
 		return true;
@@ -225,6 +232,7 @@ bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
 
 		return true;
 	}
+	m_input = start;
 
 	return false;
 }
@@ -326,6 +334,60 @@ bool SceneParser::ROWLAST(Tree** tree) {
 
 	*/
 	return false;
+}
+
+bool SceneParser::LUA(Tree** tree) {// LUA:	"Mesh(" STRING ")\n" LBODY
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	Tree* child4 = nullptr;
+	char* start = m_input;
+
+	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")\n", &child3) && LBODY(&child4)) {
+		*tree = new Tree("LUA", start, m_input - start);
+		//(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		//(*tree)->m_children.push_back(child3);
+		(*tree)->m_children.push_back(child4);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool SceneParser::LBODY(Tree** tree) {// LBODY: "Lua(<\n" CODE ">)\n"
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	Tree* child4 = nullptr;
+	char* start = m_input;
+
+	if (TERM("Lua(<\n", &child1) && CODE(&child2) && TERM(">)\n", &child3)) {
+		*tree = new Tree("LUA", start, m_input - start);
+		//(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		//(*tree)->m_children.push_back(child3);
+		//(*tree)->m_children.push_back(child4);
+
+		return true;
+	}
+
+	return false;
+}
+
+bool SceneParser::CODE(Tree** tree) {// CODE: [^">)"]*
+	Tree* child;
+	char* start = m_input;
+	//bool running = true;
+
+	while (!TERM(">)", &child)) {
+		m_input++;
+	}
+	m_input -= 2;
+	*tree = new Tree("CODE", start, m_input - start);
+
+	return true;
 }
 
 bool SceneParser::SCENE(Tree** tree) {// SCENE:	"Scene()" SBODY

@@ -27,6 +27,36 @@ std::vector<irr::scene::IMeshSceneNode*> App::m_meshes;
 std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
 int App::m_id = 0;
 
+int App::test(lua_State* L) {
+	int size = lua_gettop(L);
+
+	std::cout << size << std::endl;
+	lua_pushnumber(L, 11);
+	size = lua_gettop(L);
+	std::cout << size << std::endl;
+	lua_getglobal(L, "test1");
+	size = lua_gettop(L);
+	std::cout << size << std::endl;
+	lua_pushnumber(L, 1);
+	size = lua_gettop(L);
+	std::cout << size << std::endl;
+	if (lua_pcall(L, 1, 3, 0)) {
+		std::cout << lua_tostring(L, -1) << '\n';
+		lua_pop(L, 1);
+	}
+	size = lua_gettop(L);
+	std::cout << size << std::endl;
+	
+
+	return 0;
+}
+
+int App::test1(lua_State* L) {
+	int size = lua_gettop(L);
+	std::cout << size << std::endl;
+
+	return 0;
+}
 
 bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 {
@@ -233,6 +263,10 @@ App::App()
 	lua_setglobal(this->L, "bind");
 	lua_pushcfunction(this->L, loadScene);
 	lua_setglobal(this->L, "loadScene");
+	lua_pushcfunction(this->L, test);
+	lua_setglobal(this->L, "test");
+	lua_pushcfunction(this->L, test1);
+	lua_setglobal(this->L, "test1");
 
 	setupScript();
 	
@@ -572,7 +606,7 @@ lua_State * App::getLuaState()
 }
 
 void App::setupScript() {
-	if (luaL_dofile(L, "setup2.lua")) {
+	if (luaL_dofile(L, "setup3.lua")) {
 		std::cout << "Couldn't load script" << std::endl;
 		return;
 	}
