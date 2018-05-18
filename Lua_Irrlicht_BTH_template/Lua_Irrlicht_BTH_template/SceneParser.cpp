@@ -47,7 +47,7 @@ SceneParser::~SceneParser() {
 
 void SceneParser::buildScene(lua_State* L) const {
 	Tree* tree = m_root->m_children.back();
-	tree = tree->m_children.back();
+	//tree = tree->m_children.back();
 
 	if (tree->m_tag != "SCENE") {
 		std::cout << "no scene function" << std::endl;
@@ -86,11 +86,17 @@ void SceneParser::buildScene(lua_State* L) const {
 
 void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 	Tree* tree = nullptr;
+	bool code = false;
 
 	for (auto p : m_root->m_children) {
 		Tree* temp = p->m_children.front();
 		if (temp->m_tag == "MESH" && (temp->m_children.front()->m_lexeme == arg)) {
 			tree = temp->m_children.back();
+			break;
+		}
+		else if (temp->m_tag == "LUA" && (temp->m_children.front()->m_lexeme == arg)) {
+			tree = temp->m_children.back();
+			code = true;
 			break;
 		}
 	}
@@ -99,6 +105,13 @@ void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 		return;
 
 	tree = tree->m_children.front();
+	if (code) {
+		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 0, 0)) {
+			std::cout << lua_tostring(L, -1) << '\n';
+			lua_pop(L, 1);
+		}
+		return;
+	}
 	// loop over all triangles
 	//std::vector<int> con;
 	lua_getglobal(L, "addMesh");
