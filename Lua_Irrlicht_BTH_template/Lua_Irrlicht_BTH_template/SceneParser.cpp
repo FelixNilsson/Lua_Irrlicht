@@ -25,6 +25,7 @@
 // LUA:			"Mesh(" STRING ")\n" LBODY
 // LBODY:		"Lua(<\n" CODE ">)\n"
 // CODE:		[^">)"]*
+// WHITESPACE:	['\t'' ''\n']*
 
 
 // TSEPERATOR:	",\n" TRIANGLE | "\n" UNUSED
@@ -54,23 +55,23 @@ void SceneParser::buildScene(lua_State* L) const {
 		return;
 	}
 
-	tree = tree->m_children.back();
 	buildTexture(L);
+	tree = tree->m_children.back();
 
 	for (auto p : tree->m_children) {
 
-		if (p->m_children.front()->m_lexeme == "Mesh") {
-			std::cout << p->m_children.back()->m_lexeme << std::endl;
-			buildMesh(L, p->m_children.back()->m_lexeme);
+		if (p->m_tag == "Mesh") {
+			std::cout << p->m_children.front()->m_lexeme << std::endl;
+			buildMesh(L, p->m_children.front()->m_lexeme);
 		}
-		else if (p->m_children.front()->m_lexeme == "Bind") {
+		else if (p->m_tag == "Bind") {
 			std::cout << "bind" << std::endl;
 			std::list<Tree*>::iterator it = p->m_children.end();
 			it--;
 			lua_getglobal(L, "bind");
 			lua_pushstring(L, (*it)->m_lexeme.c_str());
 			it--;
-			lua_pushstring(L, (*it)->m_children.front()->m_lexeme.c_str());
+			lua_pushstring(L, (*it)->m_lexeme.c_str());
 			lua_pcall(L, 2, 0, 0);
 		}
 		else
@@ -89,13 +90,13 @@ void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 	bool code = false;
 
 	for (auto p : m_root->m_children) {
-		Tree* temp = p->m_children.front();
-		if (temp->m_tag == "MESH" && (temp->m_children.front()->m_lexeme == arg)) {
-			tree = temp->m_children.back();
+		//Tree* temp = p->m_children.front();
+		if (p->m_tag == "MESH" && (p->m_children.front()->m_lexeme == arg)) {
+			tree = p->m_children.back();//tree points to triangles
 			break;
 		}
-		else if (temp->m_tag == "LUA" && (temp->m_children.front()->m_lexeme == arg)) {
-			tree = temp->m_children.back();
+		else if (p->m_tag == "LUA" && (p->m_children.front()->m_lexeme == arg)) {
+			tree = p->m_children.back();//tree points to lua code
 			code = true;
 			break;
 		}
@@ -104,16 +105,25 @@ void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 	if (!tree)
 		return;
 
-	tree = tree->m_children.front();
+	//tree = tree->m_children.front();
 	if (code) {
-		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 0, 0)) {
+		lua_getglobal(L, "addMesh");
+		
+		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
 		}
+
+		lua_pushstring(L, arg.c_str());
+		if (lua_pcall(L, 2, 0, 0)) {
+			std::cout << lua_tostring(L, -1) << '\n';
+			lua_pop(L, 1);
+		}
+
 		return;
 	}
 	// loop over all triangles
-	//std::vector<int> con;
+	std::vector<int> con;
 	lua_getglobal(L, "addMesh");
 	lua_newtable(L);
 	int index1 = 1;
@@ -122,7 +132,7 @@ void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 			lua_newtable(L);
 			int index2 = 1;
 			for (auto number : vector->m_children) {
-				//con.push_back(std::stoi(number->m_lexeme));
+				con.push_back(std::stoi(number->m_lexeme));
 				lua_pushnumber(L, std::stoi(number->m_lexeme));
 				lua_rawseti(L, -2, index2);
 				index2++;
@@ -138,12 +148,12 @@ void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 }
 
 void SceneParser::buildTexture(lua_State* L) const {
-	Tree* tree = nullptr;
+	//Tree* tree = nullptr;
 
 	for (auto p : m_root->m_children) {
-		Tree* temp = p->m_children.front();
-		if (temp->m_tag == "TEXTURE") {
-			addTexture(L, temp);
+		//Tree* temp = p->m_children.front();
+		if (p->m_tag == "TEXTURE") {
+			addTexture(L, p);
 		}
 	}
 
@@ -151,8 +161,8 @@ void SceneParser::buildTexture(lua_State* L) const {
 }
 
 void SceneParser::addTexture(lua_State* L, Tree* tree) const {
-	std::string name = tree->m_children.front()->m_children.front()->m_lexeme;
-	tree = tree->m_children.back()->m_children.front(); //rows
+	std::string name = tree->m_children.front()->m_lexeme;
+	tree = tree->m_children.back(); //rows
 	
 	
 	std::vector<std::vector<std::vector<int>>> debug_row;
@@ -222,8 +232,11 @@ bool SceneParser::FUNCTION(Tree** tree) {// FUNCTION: MESH | LUA | TEXTURE
 	Tree *child = nullptr;
 	char* start = m_input;
 	if (MESH(&child) || TEXTURE(&child) || LUA(&child)) {
-		*tree = new Tree("FUNCTION", start, m_input - start);
-		(*tree)->m_children.push_back(child);
+		//*tree = new Tree("FUNCTION", start, m_input - start);
+		//(*tree)->m_children.push_back(child);
+
+		*tree = child;
+
 		return true;
 	}
 	return false;
@@ -273,10 +286,12 @@ bool SceneParser::TBODY(Tree** tree) {// TBODY:	"{\n" ROWS "}\n"
 	Tree* child3 = nullptr;
 	char* start = m_input;
 
-	if (TERM("{\n", &child1) && ROWS(&child2) && TERM("}\n", &child3)) {
-		*tree = new Tree("TBODY", start, m_input - start);
+	if (TERM("{", &child1) && WHITESPACE() && ROWS(&child2) && TERM("}\n", &child3)) {
+		//*tree = new Tree("TBODY", start, m_input - start);
 		//(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
+		//(*tree)->m_children.push_back(child2);
+
+		*tree = child2;
 
 		return true;
 	}
@@ -377,11 +392,14 @@ bool SceneParser::LBODY(Tree** tree) {// LBODY: "Lua(<\n" CODE ">)\n"
 	char* start = m_input;
 
 	if (TERM("Lua(<\n", &child1) && CODE(&child2) && TERM(">)\n", &child3)) {
-		*tree = new Tree("LUA", start, m_input - start);
+		//*tree = new Tree("LUA", start, m_input - start);
+		
 		//(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
+		//(*tree)->m_children.push_back(child2);
 		//(*tree)->m_children.push_back(child3);
 		//(*tree)->m_children.push_back(child4);
+
+		*tree = child2;
 
 		return true;
 	}
@@ -399,6 +417,16 @@ bool SceneParser::CODE(Tree** tree) {// CODE: [^">)"]*
 	}
 	m_input -= 2;
 	*tree = new Tree("CODE", start, m_input - start);
+
+	return true;
+}
+
+bool SceneParser::WHITESPACE() {// WHITESPACE:	['\t'' ''\n']*
+	CharClass ws("\n\t ");
+	Star s(&ws);
+
+	int nr = s.match(m_input);
+	m_input += nr;
 
 	return true;
 }
@@ -426,10 +454,12 @@ bool SceneParser::MBODY(Tree** tree) {// MBODY:	"\n{\n" TRIANGLES "}\n"
 	char* start = m_input;
 
 	if (TERM("\n{\n", &child1) && TRIANGLES(&child2) && TERM("}\n", &child3)) {
-		*tree = new Tree("MBODY", start, m_input - start);
+		//*tree = new Tree("MBODY", start, m_input - start);
 		//(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
+		//(*tree)->m_children.push_back(child2);
 		//(*tree)->m_children.push_back(child3);
+
+		*tree = child2;
 
 		return true;
 	}
@@ -651,9 +681,9 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	char* start = m_input;
 	
 	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")\n", &child3)) {// SMESH: "Mesh" "(" STRING ")\n"
-		*tree = new Tree("SFUNCTIONS", start, m_input - start);
+		*tree = new Tree("Mesh", start, m_input - start);
 		if (child1)
-			(*tree)->m_children.push_back(child1);
+			//(*tree)->m_children.push_back(child1);
 		if (child2)
 			(*tree)->m_children.push_back(child2);
 		if (child3)
@@ -664,7 +694,7 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 		return true;
 	}
 	else if (TERM("Bind", &child1) && TERM("(", &child2) && STRING(&child3) && TERM(", ", &child2) && TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4) ) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
-		*tree = new Tree("SFUNCTIONS", start, m_input - start);
+		*tree = new Tree("Bind", start, m_input - start);
 
 		
 		(*tree)->m_children.push_back(child1);
@@ -774,10 +804,12 @@ bool SceneParser::STRING(Tree** tree) {
 	char* start = m_input;
 
 	if (TERM("\"", &child1) && WORD(&child2) && TERM("\"", &child3)) {
-		*tree = new Tree("STRING", start, m_input - start);
+		//*tree = new Tree("STRING", start, m_input - start);
 		//(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
+		//(*tree)->m_children.push_back(child2);
 		//(*tree)->m_children.push_back(child3);
+
+		*tree = child2;
 
 		return true;
 	}
