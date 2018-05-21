@@ -23,153 +23,124 @@ irr::IrrlichtDevice* App::m_device = nullptr;
 irr::scene::ISceneManager* App::m_smgr = nullptr;
 irr::video::IVideoDriver* App::m_driver = nullptr;
 irr::gui::IGUIEnvironment* App::m_guienv = nullptr;
-std::vector<irr::scene::IMeshSceneNode*> App::m_meshes;
-std::vector<irr::scene::IMeshSceneNode*> App::m_boxes;
 int App::m_id = 0;
-
-int App::test(lua_State* L) {
-	int size = lua_gettop(L);
-
-	std::cout << size << std::endl;
-	lua_pushnumber(L, 11);
-	size = lua_gettop(L);
-	std::cout << size << std::endl;
-	lua_getglobal(L, "test1");
-	size = lua_gettop(L);
-	std::cout << size << std::endl;
-	lua_pushnumber(L, 1);
-	size = lua_gettop(L);
-	std::cout << size << std::endl;
-	if (lua_pcall(L, 1, 3, 0)) {
-		std::cout << lua_tostring(L, -1) << '\n';
-		lua_pop(L, 1);
-	}
-	size = lua_gettop(L);
-	std::cout << size << std::endl;
-	
-
-	return 0;
-}
-
-int App::test1(lua_State* L) {
-	int size = lua_gettop(L);
-	std::cout << size << std::endl;
-
-	return 0;
-}
 
 bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 {
-	//size_t len = lua_rawlen(L,1); ???
-	int isNumber = 0;
+	if (lua_rawlen(L, -1) != 3) {
+		std::cout << "Error: number of components" << std::endl;
+
+		return false;
+	}
+
 	lua_pushnumber(L, 1);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		vector.X = lua_tonumber(L, -1);
-		isNumber++;
+		lua_pop(L, 1);
 	} 
 	else {
-		std::cout << "expected a number" << std::endl;
+		std::cout << "Error: non-numeric value" << std::endl;
+		lua_pop(L, 1);
+		return false;
 	}
-	lua_pop(L, 1);
+
 	lua_pushnumber(L, 2);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		vector.Y = lua_tonumber(L, -1);
-		isNumber++;
+		lua_pop(L, 1);
 	}
 	else {
-		std::cout << "expected a number" << std::endl;
+		std::cout << "Error: non-numeric value" << std::endl;
+		lua_pop(L, 1);
+		return false;
 	}
-	lua_pop(L, 1);
+
 	lua_pushnumber(L, 3);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		vector.Z = lua_tonumber(L, -1);
-		isNumber++;
+		lua_pop(L, 1);
 	}
 	else {
-		std::cout << "expected a number" << std::endl;
+		std::cout << "Error: non-numeric value" << std::endl;
+		lua_pop(L, 1);
+		return false;
 	}
-	lua_pop(L, 1);
-	lua_pushnumber(L, 4);
-	if (lua_gettable(L, -2)) {
-		isNumber++;
-		std::cout << "to many arguments in the table" << std::endl;
-	}
-	lua_pop(L, 1);
-	if (isNumber < 3)
-		std::cout << "to few arguments in the table" << std::endl;
 		
-	return isNumber == 3;
+	return true;
 }
 
 bool App::isVectorUV(lua_State * L, vectorUV &vector)
 {
-	//size_t len = lua_rawlen(L,1); ???
-	int isNumber = 0;
+	if (lua_rawlen(L, -1) != 5) {
+		std::cout << "Error: number of components" << std::endl;
+
+		return false;
+	}
+
 	lua_pushnumber(L, 1);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		vector.vec.X = lua_tonumber(L, -1);
-		isNumber++;
+		lua_pop(L, 1);
 	}
 	else {
-		std::cout << "expected a number" << std::endl;
+		std::cout << "Error: non-numeric value" << std::endl;
+		lua_pop(L, 1);
+		return false;
 	}
-	lua_pop(L, 1);
+
 	lua_pushnumber(L, 2);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		vector.vec.Y = lua_tonumber(L, -1);
-		isNumber++;
+		lua_pop(L, 1);
 	}
 	else {
-		std::cout << "expected a number" << std::endl;
+		std::cout << "Error: non-numeric value" << std::endl;
+		lua_pop(L, 1);
+		return false;
 	}
-	lua_pop(L, 1);
+
 	lua_pushnumber(L, 3);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		vector.vec.Z = lua_tonumber(L, -1);
-		isNumber++;
+		lua_pop(L, 1);
 	}
 	else {
-		std::cout << "expected a number" << std::endl;
+		std::cout << "Error: non-numeric value" << std::endl;
+		lua_pop(L, 1);
+		return false;
 	}
-	lua_pop(L, 1);
+
 	lua_pushnumber(L, 4);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		vector.uv.X = lua_tonumber(L, -1);
-		isNumber++;
+		lua_pop(L, 1);
 	}
 	else {
-		std::cout << "expected a number" << std::endl;
+		std::cout << "Error: non-numeric value" << std::endl;
+		lua_pop(L, 1);
+		return false;
 	}
-	lua_pop(L, 1);
+
 	lua_pushnumber(L, 5);
 	lua_gettable(L, -2);
 	if (lua_isnumber(L, -1)) {
 		vector.uv.Y = lua_tonumber(L, -1);
-		isNumber++;
+		lua_pop(L, 1);
 	}
 	else {
-		std::cout << "expected a number" << std::endl;
+		std::cout << "Error: non-numeric value" << std::endl;
+		lua_pop(L, 1);
+		return false;
 	}
 
-
-	lua_pop(L, 1);
-	lua_pushnumber(L, 6);
-	if (lua_gettable(L, -2)) {
-		isNumber++;
-		std::cout << "to many arguments in the table" << std::endl;
-	}
-	lua_pop(L, 1);
-	if (isNumber < 5)
-		std::cout << "to few arguments in the table" << std::endl;
-
-	return isNumber == 5;
+	return true;
 }
 
 void App::drawOneFrame()
@@ -201,6 +172,7 @@ irr::scene::ISceneNode* App::getSceneNode(std::string nodeName)
 		}
 			
 	}
+
 	return node;
 }
 
@@ -211,7 +183,6 @@ void App::destroyScene()
 		auto s = e->getType();
 		if (s != ESNT_CAMERA)
 		e->remove();
-
 	}
 }
 
@@ -242,7 +213,8 @@ App::App()
 	keymap[4].Action = irr::EKA_JUMP_UP;
 	keymap[4].KeyCode = irr::KEY_SPACE;
 
-	m_smgr->addCameraSceneNodeFPS(0, 100, 0.1, -1, keymap, 5, false, 100, false, true);
+	auto node = m_smgr->addCameraSceneNodeFPS(0, 100, 0.1, -1, keymap, 5, false, 100, false, true);
+	node->setName("camera");
 
 	this->L = luaL_newstate();
 	luaL_openlibs(this->L);
@@ -263,10 +235,6 @@ App::App()
 	lua_setglobal(this->L, "bind");
 	lua_pushcfunction(this->L, loadScene);
 	lua_setglobal(this->L, "loadScene");
-	lua_pushcfunction(this->L, test);
-	lua_setglobal(this->L, "test");
-	lua_pushcfunction(this->L, test1);
-	lua_setglobal(this->L, "test1");
 
 	setupScript();
 	
@@ -303,7 +271,7 @@ int App::addMesh(lua_State * L)
 	std::string name;
 
 	if (size < 1 || size > 2) {
-		std::cout << "To wrong arguments" << std::endl;
+		std::cout << "Wrong number of arguments" << std::endl;
 		return 0;
 	}
 	else if (size == 1) {
@@ -333,13 +301,18 @@ int App::addMesh(lua_State * L)
 	lua_len(L, -1);
 	int length = lua_tointeger(L, -1);
 	lua_pop(L, 1);
-	std::cout << length << std::endl;
+	
 	bool error = false;
+	irr::core::vector3df vec;
+	vectorUV vecUV;
+	lua_geti(L, -1, 1);
+	bool vec3 = false;
+	if (lua_rawlen(L, -1) == 3)
+		vec3 = true;
+	lua_pop(L, 1);
 	for (int i = 0; i < length && !error; i++) /*((type = lua_geti(L, -1, index)) == LUA_TTABLE)*/ {
-		irr::core::vector3df vec;
-		vectorUV vecUV;
 		lua_geti(L, -1, i + 1);
-		if (isVector(L, vec)) {
+		if (vec3 && isVector(L, vec)) {
 			list.push_back(vec);
 		}
 		else if (isVectorUV(L, vecUV)) {
@@ -352,15 +325,12 @@ int App::addMesh(lua_State * L)
 	}
 	if (error) {
 		std::cout << "error in triangle list" << std::endl;
-		std::cout << "WARNING!!! bad argument(s)" << std::endl;
 	}
 	else {
 		m_id++;
 		auto size = list.size();
-		bool isUV = false;
-		if (listUV.size() > 0) {
+		if (!vec3) {
 			size = listUV.size();
-			isUV = true;
 		}
 
 		buffer->Vertices.reallocate(size);
@@ -370,7 +340,7 @@ int App::addMesh(lua_State * L)
 
 		for (int i = 0; i < size; i++) {
 			S3DVertex& v = buffer->Vertices[i];
-			if (isUV) {
+			if (!vec3) {
 				v.TCoords.set(listUV[i].uv);
 				v.Pos.set(listUV[i].vec);
 			}
@@ -383,11 +353,6 @@ int App::addMesh(lua_State * L)
 		auto p = m_smgr->addMeshSceneNode(mesh);
 		p->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		p->setName(irr::core::string<char*>(name.c_str()));
-		m_meshes.push_back(p);
-	}
-	//std::cout << "added elements: " << index - 1 << std::endl;
-	for (auto& vec : list) {
-		std::cout << vec.X << ", " << vec.Y << ", " << vec.Z << std::endl;
 	}
 
 	return 0;
@@ -424,12 +389,11 @@ int App::addBox(lua_State * L)
 	}
 	
 	if (correct) {
-		m_boxes.push_back(m_smgr->addCubeSceneNode(size, 0, m_id, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1)));
+		auto node = m_smgr->addCubeSceneNode(size, 0, m_id, ori, irr::core::vector3df(0, 0, 0), irr::core::vector3df(1, 1, 1));
 		m_id++;
-		m_boxes[m_boxes.size() - 1]->setName(irr::core::string<char*>(name.c_str()));
-		m_boxes[m_boxes.size() - 1]->setMaterialFlag(irr::video::EMF_LIGHTING, false);
-		m_boxes[m_boxes.size() - 1]->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
-		std::cout << "succes" << std::endl;
+		node->setName(irr::core::string<char*>(name.c_str()));
+		node->setMaterialFlag(irr::video::EMF_LIGHTING, false);
+		node->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 	}
 	
 	
@@ -457,7 +421,6 @@ int App::getNodes(lua_State * L)
 
 int App::camera(lua_State * L)
 {
-	int debug = lua_gettop(L);
 	bool isPos = false;
 	bool isTarget = false;
 	irr::core::vector3df pos;
@@ -473,7 +436,6 @@ int App::camera(lua_State * L)
 		if (isPos && isTarget) {
 			m_smgr->getActiveCamera()->setPosition(pos);
 			m_smgr->getActiveCamera()->setTarget(target);
-			std::cout << "succes" << std::endl;
 		}
 	}
 	return 0;
@@ -491,7 +453,6 @@ int App::snapshot(lua_State * L)
 		irr::io::path path(irr::core::string<char*>(name.c_str()));
 	
 		bool worked = m_driver->writeImageToFile(screenshot, path);
-		std::cout << worked << std::endl;
 	}
 	
 	return 0;
@@ -501,9 +462,7 @@ int App::addTexture(lua_State * L)
 {
 	int isTable;
 	std::vector<irr::core::vector3df> color;
-	//std::vector<irr::core::vector3df> row;
 	bool error = false;
-	int rowNr;
 	int counter = 0;
 	if (lua_isstring(L, -1)) {
 		std::string name = lua_tostring(L, -1);
@@ -529,27 +488,27 @@ int App::addTexture(lua_State * L)
 					if (counter == 0)
 						counter = index;
 					else if (index != counter) {
-						//wrong
 						std::cout << "texture have wrong dimensions" << std::endl;
+						error = true;
+
 						return 0;
 					}
-					rowNr = index;
 					Nr++;
 					lua_pop(L, 2);
 					lua_pushnumber(L, Nr);
 			}
 			Nr--;
-			rowNr--;
-			if (Nr == rowNr && isPowerOfTwo(Nr)) {
-				char *data = new char[Nr * rowNr * 3];
+			counter--;
+			if (counter == Nr && isPowerOfTwo(Nr)) {
+				char *data = new char[Nr * Nr * 3];
 				for (int i = 0; i < Nr; i++) {
-					for (int k = 0; k < rowNr; k++) {
-						data[i * rowNr * 3 + k * 3 + 0] = color[i * rowNr + k].X * 255;
-						data[i * rowNr * 3 + k * 3 + 1] = color[i * rowNr + k].Y * 255;
-						data[i * rowNr * 3 + k * 3 + 2] = color[i * rowNr + k].Z * 255;
+					for (int k = 0; k < Nr; k++) {
+						data[i * Nr * 3 + k * 3 + 0] = color[i * Nr + k].X * 255;
+						data[i * Nr * 3 + k * 3 + 1] = color[i * Nr + k].Y * 255;
+						data[i * Nr * 3 + k * 3 + 2] = color[i * Nr + k].Z * 255;
 					}
 				}
-				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(Nr,rowNr), (void*)data, false, false);
+				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(Nr,Nr), (void*)data, false, false);
 				
 				auto debugP = m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
 				if (debugP)
@@ -578,6 +537,12 @@ int App::bind(lua_State * L)
 				if (texture) {
 					node->setMaterialTexture(0, texture);
 				}
+				else {
+					std::cout << "Error: unknown texture" << std::endl;
+				}
+			}
+			else {
+				std::cout << "Error: unknown node" << std::endl;
 			}
 		}
 	}

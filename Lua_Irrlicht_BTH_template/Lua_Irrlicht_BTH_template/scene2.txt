@@ -16,6 +16,5 @@ Mesh("square")
 }
 Scene()
 {
-Mesh("square")
 Bind("checkerboard", Mesh("square"))
 }

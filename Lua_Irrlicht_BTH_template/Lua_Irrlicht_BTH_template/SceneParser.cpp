@@ -70,7 +70,6 @@ void SceneParser::buildScene(lua_State* L) {
 			buildMesh(L, p->m_children.front()->m_lexeme);
 		}
 		else if (p->m_tag == "Bind") {
-			std::cout << "bind" << std::endl;
 			//std::list<Tree*>::iterator it = p->m_children.end();
 			//it--;
 			name = p->m_children.front()->m_lexeme;
@@ -184,8 +183,6 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 	}
 	lua_pushstring(L, arg.c_str());
 	lua_pcall(L, 2, 0, 0);
-
-	std::cout << "debug\n";
 }
 
 void SceneParser::buildTexture(lua_State* L) {
@@ -665,7 +662,8 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	
 	WHITESPACE();
 	if (SMESH(&child)) {
-		*tree = child;
+		*tree = new Tree("Mesh", start, m_input - start);
+		(*tree)->m_children.push_back(child);
 
 		return true;
 	}

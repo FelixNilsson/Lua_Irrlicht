@@ -17,8 +17,6 @@ private:
 	static irr::scene::ISceneManager* m_smgr;
 	static irr::gui::IGUIEnvironment* m_guienv;
 
-	static std::vector<irr::scene::IMeshSceneNode*> m_meshes;
-	static std::vector<irr::scene::IMeshSceneNode*> m_boxes;
 	static int m_id;
 	void setupScript();
 public:
@@ -44,7 +42,5 @@ public:
 	static int addTexture(lua_State* L);
 	static int bind(lua_State* L);
 	static int loadScene(lua_State* L);
-	static int test(lua_State* L);
-	static int test1(lua_State* L);
 	lua_State* getLuaState();
 };
