@@ -15,16 +15,17 @@
 // SBODY:		"\n{\n" SFUNCTIONS* "}"
 // SFUNCTIONS:	SMESH | BIND
 // SMESH:		"Mesh" "(" STRING ")\n"
-// BIND:		"Bind" "(" STRING ", " SMESH ")\n"
+// BIND:		"Bind" "(" STRING ", " SMESH ")\n" | "Bind" "(" STRING ", TRANSFORM 
 // STRING:		'\"' [a-z]+ '\"'
 // TEXTURE:		"Texture(" STRING ")\n" TBODY
 // TBODY:		"{\n" ROWS "}\n"
 // ROWS:		ROW*
 // ROW:			(VECTOR3 "," VECTOR3)* RSEPERATOR
 // RSEPERATOR:	",\n" (ROW | EMPTY) | "\n"
-// LUA:			"Mesh(" STRING ")\n" LBODY
-// LBODY:		"Lua(<\n" CODE ">)\n"
+// LUA:			"Mesh(" STRING ")\n" LBODY "\n"
+// LBODY:		"Lua(<\n" CODE ">)"
 // CODE:		[^">)"]*
+// TRANSFORM:	WHITESPACE "Transform(" WHITESPACE LBODY "," WHITESPACE SMESH "))" WHITESPACE
 // WHITESPACE:	['\t'' ''\n']*
 
 
@@ -393,7 +394,7 @@ bool SceneParser::LUA(Tree** tree) {// LUA:	"Mesh(" STRING ")\n" LBODY
 	Tree* child4 = nullptr;
 	char* start = m_input;
 
-	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")\n", &child3) && LBODY(&child4)) {
+	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")\n", &child3) && LBODY(&child4) && TERM("\n", &child3)) {
 		*tree = new Tree("LUA", start, m_input - start);
 		//(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
@@ -413,7 +414,7 @@ bool SceneParser::LBODY(Tree** tree) {// LBODY: "Lua(<\n" CODE ">)\n"
 	Tree* child4 = nullptr;
 	char* start = m_input;
 
-	if (TERM("Lua(<\n", &child1) && CODE(&child2) && TERM(">)\n", &child3)) {
+	if (TERM("Lua(<\n", &child1) && CODE(&child2) && TERM(">)", &child3)) {
 		//*tree = new Tree("LUA", start, m_input - start);
 		
 		//(*tree)->m_children.push_back(child1);
@@ -451,6 +452,23 @@ bool SceneParser::WHITESPACE() {// WHITESPACE:	['\t'' ''\n']*
 	m_input += nr;
 
 	return true;
+}
+
+bool SceneParser::TRANSFORM(Tree** tree) {//WHITESPACE "Transform(" WHITESPACE LBODY "," WHITESPACE SMESH "))" WHITESPACE
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
+	Tree* child3 = nullptr;
+	char* start = m_input;
+
+	WHITESPACE();
+
+	if (TERM("Transform(", &child1) && WHITESPACE() && LBODY(&child1) && TERM(",", &child2) && WHITESPACE() && SMESH(&child2) && TERM("))", &child3)) {
+		*tree = new Tree("Transform", start, m_input - start);
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child2);
+		return true;
+	}
+	return false;
 }
 
 bool SceneParser::SCENE(Tree** tree) {// SCENE:	"Scene()" SBODY
@@ -703,20 +721,10 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	char* start = m_input;
 	
 	WHITESPACE();
-
-	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")\n", &child3)) {// SMESH: "Mesh" "(" STRING ")\n"
-		*tree = new Tree("Mesh", start, m_input - start);
-		if (child1)
-			//(*tree)->m_children.push_back(child1);
-		if (child2)
-			(*tree)->m_children.push_back(child2);
-		if (child3)
-			//(*tree)->m_children.push_back(child3);
-			if (child4);
-			//(*tree)->m_children.push_back(child4);
-
-		return true;
+	if (SMESH(&child1)) {
+		*tree = child1;
 	}
+	
 	else if (TERM("Bind", &child1) && TERM("(", &child2) && STRING(&child3) && TERM(", ", &child2) && TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4) ) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
 		*tree = new Tree("Bind", start, m_input - start);
 
@@ -729,6 +737,25 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	}
 
 	return false;
+}
+
+bool SceneParser::SMESH(Tree** tree = nullptr) {
+	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
+	char* start = m_input;
+
+	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")\n", &child3)) {// SMESH: "Mesh" "(" STRING ")\n"
+		*tree = new Tree("Mesh", start, m_input - start);
+		if (child1)
+			//(*tree)->m_children.push_back(child1);
+			if (child2)
+				(*tree)->m_children.push_back(child2);
+		if (child3)
+			//(*tree)->m_children.push_back(child3);
+			if (child4);
+		//(*tree)->m_children.push_back(child4);
+
+		return true;
+	}
 }
 
 /*bool SceneParser::FIELDSEP(Tree **result) {  // FIELDSEP : "," | ";"
