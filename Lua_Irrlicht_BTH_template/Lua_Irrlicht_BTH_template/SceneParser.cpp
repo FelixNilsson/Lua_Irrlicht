@@ -32,7 +32,7 @@
 
 SceneParser::SceneParser(char* input) : m_input(input), digit("0123456789"), hex("0123456789abcdefABCDEF"), nonzero("123456789"), dot("."),
 letters("QWERTYUIOPASDFGHJKLMNBVCXZqwertyuiopasdfghjklzxcvbnm"), sDigit(&digit), number({ &nonzero, &sDigit }), zero("0"), x("x"), sHex(&hex),
-hexnumber({ &zero, &x, &hex, &sHex }), sLetters(&letters), word({ &letters, &sLetters }) {
+hexnumber({ &zero, &x, &hex, &sHex }), sLetters(&letters), word({ &letters, &sLetters, &sDigit }) {
 	if (FILE(&m_root)) {
 		m_root->dump();
 		std::cout << "Succes with parsing" << std::endl;
@@ -47,6 +47,10 @@ SceneParser::~SceneParser() {
 }
 
 void SceneParser::buildScene(lua_State* L) const {
+	if (m_root == nullptr)
+		return;
+
+
 	Tree* tree = m_root->m_children.back();
 	//tree = tree->m_children.back();
 
@@ -68,6 +72,7 @@ void SceneParser::buildScene(lua_State* L) const {
 			std::cout << "bind" << std::endl;
 			std::list<Tree*>::iterator it = p->m_children.end();
 			it--;
+			buildMesh(L, (*it)->m_lexeme);
 			lua_getglobal(L, "bind");
 			lua_pushstring(L, (*it)->m_lexeme.c_str());
 			it--;
@@ -85,7 +90,7 @@ void SceneParser::buildScene(lua_State* L) const {
 
 }
 
-void SceneParser::buildMesh(lua_State* L, std::string arg) const {
+void SceneParser::buildMesh(lua_State* L, std::string& arg) const {
 	Tree* tree = nullptr;
 	bool code = false;
 
@@ -107,13 +112,27 @@ void SceneParser::buildMesh(lua_State* L, std::string arg) const {
 
 	//tree = tree->m_children.front();
 	if (code) {
-		lua_getglobal(L, "addMesh");
+		lua_getglobal(L, "addMesh");//1
 		
-		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {
+		if (luaL_loadstring(L, "local args = {...} print(\"hello\") tri = {} for k, v in pairs(args[1]) do tri[k] = {args[2](v[1],v[2],v[3],v[4],v[5])} end return tri")) {//2
+			std::cout << lua_tostring(L, -1) << '\n';
+			lua_pop(L, 1);
+		}
+		
+		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {//3
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
 		}
 
+		if (luaL_loadstring(L, "local args = {...} return args[1]+10, args[2], args[3], args[4], args[5]")) {//2
+			std::cout << lua_tostring(L, -1) << '\n';
+			lua_pop(L, 1);
+		}
+		if (/*luaL_loadstring(L, "local args = {...} return args[1]+10, args[2], args[3], args[4], args[5]") ||*/ lua_pcall(L, 2, 1, 0)) {
+			std::cout << lua_tostring(L, -1) << '\n';
+			lua_pop(L, 1);
+		}
+		
 		lua_pushstring(L, arg.c_str());
 		if (lua_pcall(L, 2, 0, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
@@ -209,9 +228,10 @@ bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* | SCENE
 	Tree* child = nullptr;
 	std::list<Tree*> list;
 	char* start = m_input;
-	while (FUNCTION(&child)) {
+	while (WHITESPACE() && FUNCTION(&child)) {
 		list.push_back(child);
 	}
+	WHITESPACE();
 	if (SCENE(&child)) {
 		list.push_back(child);
 	}
@@ -331,6 +351,8 @@ bool SceneParser::ROW(Tree** tree) {
 	std::list<Tree*> list;
 	char* start = m_input;
 	bool comma = true;
+
+	WHITESPACE();
 
 	while (VECTOR3(&child)) {
 		list.push_back(child);
@@ -511,7 +533,7 @@ bool SceneParser::TRIANGLE(Tree** tree) {// TRIANGLE:	VECTOR3 ",\n" VECTOR3 ",\n
 	Tree* child5 = nullptr;
 	char* start = m_input;
 
-	if (VECTOR3(&child1) && TERM(",\n", &child2) && VECTOR3(&child3) && TERM(",\n", &child4) && VECTOR3(&child5)) {
+	if (WHITESPACE() && VECTOR3(&child1) && TERM(",\n", &child2) && WHITESPACE() && VECTOR3(&child3) && TERM(",\n", &child4) && WHITESPACE() && VECTOR3(&child5)) {
 		*tree = new Tree("TRIANGLE", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		//(*tree)->m_children.push_back(child2);
@@ -533,7 +555,7 @@ bool SceneParser::TRIANGLE5(Tree** tree) {//VECTOR5 ",\n" VECTOR5 ",\n" VECTOR5
 	Tree* child5 = nullptr;
 	char* start = m_input;
 
-	if (VECTOR5(&child1) && TERM(",\n", &child2) && VECTOR5(&child3) && TERM(",\n", &child4) && VECTOR5(&child5)) {
+	if (WHITESPACE() && VECTOR5(&child1) && TERM(",", &child2) && WHITESPACE() && VECTOR5(&child3) && TERM(",", &child4) && WHITESPACE() && VECTOR5(&child5)) {
 		*tree = new Tree("TRIANGLE", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		//(*tree)->m_children.push_back(child2);
@@ -680,6 +702,8 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
 	char* start = m_input;
 	
+	WHITESPACE();
+
 	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")\n", &child3)) {// SMESH: "Mesh" "(" STRING ")\n"
 		*tree = new Tree("Mesh", start, m_input - start);
 		if (child1)

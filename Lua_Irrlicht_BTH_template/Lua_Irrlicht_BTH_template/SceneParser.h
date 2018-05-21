@@ -24,7 +24,7 @@ private:
 	Star sLetters;
 	Seq word;
 private:
-	void buildMesh(lua_State* L, std::string arg) const;
+	void buildMesh(lua_State* L, std::string& arg) const;
 	void buildTexture(lua_State* L) const;
 	void addTexture(lua_State* L, Tree* tree) const;
 
