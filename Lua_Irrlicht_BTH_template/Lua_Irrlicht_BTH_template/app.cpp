@@ -503,13 +503,14 @@ int App::addTexture(lua_State * L)
 	std::vector<irr::core::vector3df> color;
 	//std::vector<irr::core::vector3df> row;
 	bool error = false;
-	int column;
+	int rowNr;
+	int counter = 0;
 	if (lua_isstring(L, -1)) {
 		std::string name = lua_tostring(L, -1);
 		lua_pop(L, 1);
 		if (lua_istable(L, -1)) {//first table
-			int row = 1;
-			lua_pushnumber(L, row);
+			int Nr = 1;
+			lua_pushnumber(L, Nr);
 			while (isTable = lua_gettable(L, -2) && !error) {//second table
 					int index = 1;
 					lua_pushnumber(L, index);
@@ -525,23 +526,30 @@ int App::addTexture(lua_State * L)
 						lua_pushnumber(L, index);
 
 					}
-					column = index;
-					row++;
+					if (counter == 0)
+						counter = index;
+					else if (index != counter) {
+						//wrong
+						std::cout << "texture have wrong dimensions" << std::endl;
+						return 0;
+					}
+					rowNr = index;
+					Nr++;
 					lua_pop(L, 2);
-					lua_pushnumber(L, row);
+					lua_pushnumber(L, Nr);
 			}
-			row--;
-			column--;
-			if (row == column && isPowerOfTwo(row)) {
-				char *data = new char[row * column * 3];
-				for (int i = 0; i < row; i++) {
-					for (int k = 0; k < column; k++) {
-						data[i * column * 3 + k * 3 + 0] = color[i * column + k].X * 255;
-						data[i * column * 3 + k * 3 + 1] = color[i * column + k].Y * 255;
-						data[i * column * 3 + k * 3 + 2] = color[i * column + k].Z * 255;
+			Nr--;
+			rowNr--;
+			if (Nr == rowNr && isPowerOfTwo(Nr)) {
+				char *data = new char[Nr * rowNr * 3];
+				for (int i = 0; i < Nr; i++) {
+					for (int k = 0; k < rowNr; k++) {
+						data[i * rowNr * 3 + k * 3 + 0] = color[i * rowNr + k].X * 255;
+						data[i * rowNr * 3 + k * 3 + 1] = color[i * rowNr + k].Y * 255;
+						data[i * rowNr * 3 + k * 3 + 2] = color[i * rowNr + k].Z * 255;
 					}
 				}
-				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(row,column), (void*)data, false, false);
+				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(Nr,rowNr), (void*)data, false, false);
 				
 				auto debugP = m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
 				if (debugP)
