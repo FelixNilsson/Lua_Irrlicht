@@ -9,6 +9,7 @@ class SceneParser
 private:
 	char* m_input;
 	Tree* m_root;
+	int m_counter = 1;
 
 	CharClass digit;
 	CharClass hex;
@@ -24,9 +25,9 @@ private:
 	Star sLetters;
 	Seq word;
 private:
-	void buildMesh(lua_State* L, std::string& arg, const char *p = nullptr) const;
-	void buildTexture(lua_State* L) const;
-	void addTexture(lua_State* L, Tree* tree) const;
+	void buildMesh(lua_State* L, std::string& arg, const char *p = nullptr);
+	void buildTexture(lua_State* L);
+	void addTexture(lua_State* L, Tree* tree);
 
 	bool FILE(Tree** = nullptr);
 	bool FUNCTION(Tree** = nullptr);
@@ -35,7 +36,6 @@ private:
 	bool TBODY(Tree** tree);
 	bool ROWS(Tree** tree);
 	bool ROW(Tree** tree);
-	bool ROWLAST(Tree** tree);
 	bool LUA(Tree** tree);
 	bool LBODY(Tree** tree);
 	bool CODE(Tree** tree);
@@ -47,7 +47,6 @@ private:
 	bool TRIANGLE5(Tree** tree);
 	bool VECTOR3(Tree** tree);
 	bool VECTOR5(Tree** tree);
-	bool TSEPERATOR(Tree** tree);
 	bool NUMBER(Tree** tree);
 	bool SBODY(Tree** tree);
 	bool SFUNCTIONS(Tree** tree);
@@ -55,7 +54,7 @@ private:
 	bool BIND(Tree** tree);
 	bool SMESH(Tree** tree);
 
-	bool TERM(const char *lit, Tree** = nullptr);
+	bool TERM(const char *lit);
 	//bool NUM(Tree** = nullptr);
 	//bool TABLE2(Tree** = nullptr);
 	//bool LIST(Tree** = nullptr);
@@ -71,7 +70,7 @@ public:
 	SceneParser(char*);
 	~SceneParser();
 
-	void buildScene(lua_State* L) const;
+	void buildScene(lua_State* L);
 
 };
 

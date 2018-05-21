@@ -17,10 +17,6 @@ int Star::match(char const* text) {
 	return consumed;
 }
 
-void Seq::addRegex(Regex* r) {
-	m_cells.push_back(r);
-}
-
 int Seq::match(char const * text)
 {
 	int chars, consumed = 0;

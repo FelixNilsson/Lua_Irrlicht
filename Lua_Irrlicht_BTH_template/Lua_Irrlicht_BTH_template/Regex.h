@@ -36,6 +36,5 @@ private:
 public:
 	Seq(std::vector<Regex*> v) : m_cells(v) {}
 
-	void addRegex(Regex*);
 	int match(char const * text);
 };

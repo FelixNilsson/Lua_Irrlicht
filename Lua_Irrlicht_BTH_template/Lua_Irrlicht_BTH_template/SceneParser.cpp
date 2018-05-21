@@ -40,14 +40,13 @@ hexnumber({ &zero, &x, &hex, &sHex }), sLetters(&letters), word({ &letters, &sLe
 	}
 	else
 		std::cout << "Wrong with parsing" << std::endl;
-
 }
 
 
 SceneParser::~SceneParser() {
 }
 
-void SceneParser::buildScene(lua_State* L) const {
+void SceneParser::buildScene(lua_State* L) {
 	if (m_root == nullptr)
 		return;
 
@@ -63,6 +62,7 @@ void SceneParser::buildScene(lua_State* L) const {
 	buildTexture(L);
 	tree = tree->m_children.back();
 
+	std::string name;
 	for (auto p : tree->m_children) {
 		
 		if (p->m_tag == "Mesh") {
@@ -73,9 +73,10 @@ void SceneParser::buildScene(lua_State* L) const {
 			std::cout << "bind" << std::endl;
 			//std::list<Tree*>::iterator it = p->m_children.end();
 			//it--;
-			buildMesh(L, p->m_children.front()->m_lexeme);
+			name = p->m_children.front()->m_lexeme;
+			buildMesh(L, name);
 			lua_getglobal(L, "bind");
-			lua_pushstring(L, p->m_children.front()->m_lexeme.c_str());
+			lua_pushstring(L, name.c_str());
 			//it--;
 			lua_pushstring(L, p->m_children.back()->m_lexeme.c_str());
 			lua_pcall(L, 2, 0, 0);
@@ -85,10 +86,11 @@ void SceneParser::buildScene(lua_State* L) const {
 
 			std::list<Tree*>::iterator it = p->m_children.begin();
 			it++;
-			buildMesh(L, (*it)->m_lexeme, p->m_children.front()->m_lexeme.c_str());
+			name = (*it)->m_lexeme;
+			buildMesh(L, name, p->m_children.front()->m_lexeme.c_str());//name  lua kod
 
 			lua_getglobal(L, "bind");
-			lua_pushstring(L, (*it)->m_lexeme.c_str());
+			lua_pushstring(L, name.c_str());
 			//it--;
 			lua_pushstring(L, p->m_children.back()->m_lexeme.c_str());
 			lua_pcall(L, 2, 0, 0);
@@ -97,14 +99,11 @@ void SceneParser::buildScene(lua_State* L) const {
 			std::cout << "nay" << std::endl;
 
 
-		std::cout << p->m_lexeme << std::endl;
+		//std::cout << p->m_lexeme << std::endl;
 	}
-
-	tree = tree->m_children.back();
-
 }
 
-void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) const {
+void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 	Tree* tree = nullptr;
 	bool code = false;
 
@@ -128,11 +127,12 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) const
 	if (code) {
 		lua_getglobal(L, "addMesh");//1
 		
-		if (luaL_loadstring(L, "local args = {...} print(\"hello\") tri = {} for k, v in pairs(args[1]) do tri[k] = {args[2](v[1],v[2],v[3],v[4],v[5])} end return tri")) {//2
+		if (luaL_loadstring(L, "local args = {...} tri = {} for k, v in pairs(args[1]) do tri[k] = {args[2](v[1],v[2],v[3],v[4],v[5])} end return tri")) {//2
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
 		}
 		
+		// create mesh
 		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {//3
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
@@ -142,7 +142,8 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) const
 				std::cout << lua_tostring(L, -1) << '\n';
 				lua_pop(L, 1);
 			}
-			arg += std::string(std::to_string(1));
+			arg += std::string(std::to_string(m_counter));
+			m_counter++;
 			//arg = std::string("mesh");
 		}
 		else {
@@ -165,7 +166,6 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) const
 		return;
 	}
 	// loop over all triangles
-	std::vector<int> con;
 	lua_getglobal(L, "addMesh");
 	lua_newtable(L);
 	int index1 = 1;
@@ -174,7 +174,6 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) const
 			lua_newtable(L);
 			int index2 = 1;
 			for (auto number : vector->m_children) {
-				con.push_back(std::stoi(number->m_lexeme));
 				lua_pushnumber(L, std::stoi(number->m_lexeme));
 				lua_rawseti(L, -2, index2);
 				index2++;
@@ -189,7 +188,7 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) const
 	std::cout << "debug\n";
 }
 
-void SceneParser::buildTexture(lua_State* L) const {
+void SceneParser::buildTexture(lua_State* L) {
 	//Tree* tree = nullptr;
 
 	for (auto p : m_root->m_children) {
@@ -202,34 +201,28 @@ void SceneParser::buildTexture(lua_State* L) const {
 
 }
 
-void SceneParser::addTexture(lua_State* L, Tree* tree) const {
+void SceneParser::addTexture(lua_State* L, Tree* tree) {
 	std::string name = tree->m_children.front()->m_lexeme;
 	tree = tree->m_children.back(); //rows
 	
-	
-	std::vector<std::vector<std::vector<int>>> debug_row;
+
 	lua_getglobal(L, "addTexture");
 	lua_newtable(L);
 	int rowNr = 1;
 	for (auto row : tree->m_children) {
 		lua_newtable(L);
 		int vectorNr = 1;
-		std::vector<std::vector<int>> debug_vector;
 		for (auto vector : row->m_children) {
 			lua_newtable(L);
 			int index = 1;
-			std::vector<int> con;
 			for (auto number : vector->m_children) {
-				con.push_back(std::stoi(number->m_lexeme));
 				lua_pushnumber(L, std::stoi(number->m_lexeme));
 				lua_rawseti(L, -2, index);
 				index++;
 			}
-			debug_vector.push_back(con);
 			lua_rawseti(L, -2, vectorNr);
 			vectorNr++;
 		}
-		debug_row.push_back(debug_vector);
 		lua_rawseti(L, -2, rowNr);
 		rowNr++;
 	}
@@ -238,16 +231,6 @@ void SceneParser::addTexture(lua_State* L, Tree* tree) const {
 }
 
 bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* | SCENE
-	/*Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
-	char* start = m_input;
-	if (FUNCTION(&child1) && FILE(&child2)) {
-		*tree = new Tree("FILE", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-		if (child2)
-			(*tree)->m_children.push_back(child2);
-	}
-	*/
 	Tree* child = nullptr;
 	std::list<Tree*> list;
 	char* start = m_input;
@@ -275,9 +258,6 @@ bool SceneParser::FUNCTION(Tree** tree) {// FUNCTION: MESH | LUA | TEXTURE
 	Tree *child = nullptr;
 	char* start = m_input;
 	if (MESH(&child) || TEXTURE(&child) || LUA(&child)) {
-		//*tree = new Tree("FUNCTION", start, m_input - start);
-		//(*tree)->m_children.push_back(child);
-
 		*tree = child;
 
 		return true;
@@ -288,20 +268,18 @@ bool SceneParser::FUNCTION(Tree** tree) {// FUNCTION: MESH | LUA | TEXTURE
 bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
-	Tree* child4 = nullptr;
 	char* start = m_input;
 
-	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")", &child3) && MBODY(&child4)) {
+	if (TERM("Mesh(") && STRING(&child1) && TERM(")") && MBODY(&child2)) {
 		*tree = new Tree("MESH", start, m_input - start);
-		//(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
-		//(*tree)->m_children.push_back(child3);
-		(*tree)->m_children.push_back(child4);
 
 		return true;
 	}
 	m_input = start;
+
+	delete child1;
 
 	return false;
 }
@@ -312,7 +290,7 @@ bool SceneParser::TEXTURE(Tree** tree) {// TEXTURE:	"Texture(" STRING ")\n" TBOD
 	
 	char* start = m_input;
 
-	if (TERM("Texture(", &child1) && STRING(&child1) && TERM(")\n", &child2) && TBODY(&child2)) {
+	if (TERM("Texture(") && STRING(&child1) && TERM(")\n") && TBODY(&child2)) {
 		*tree = new Tree("TEXTURE", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
@@ -320,21 +298,17 @@ bool SceneParser::TEXTURE(Tree** tree) {// TEXTURE:	"Texture(" STRING ")\n" TBOD
 		return true;
 	}
 
+	delete child1;
+
 	return false;
 }
 
 bool SceneParser::TBODY(Tree** tree) {// TBODY:	"{\n" ROWS "}\n"
-	Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
+	Tree* child = nullptr;
 	char* start = m_input;
 
-	if (TERM("{", &child1) && WHITESPACE() && ROWS(&child2) && TERM("}\n", &child3)) {
-		//*tree = new Tree("TBODY", start, m_input - start);
-		//(*tree)->m_children.push_back(child1);
-		//(*tree)->m_children.push_back(child2);
-
-		*tree = child2;
+	if (TERM("{") && WHITESPACE() && ROWS(&child) && TERM("}\n")) {
+		*tree = child;
 
 		return true;
 	}
@@ -346,25 +320,24 @@ bool SceneParser::ROWS(Tree** tree) {// ROWS: ROW*
 	Tree* child = nullptr;
 	std::list<Tree*> list;
 	char* start = m_input;
-	//bool comma = true;
 
 	while (ROW(&child)) {
 		list.push_back(child);
 		
-		if (!TERM(",\n", &child)) {
-			//comma = false;
+		if (!TERM(",\n")) {
 			break;
 		}
 	}
 
-	if (!TERM("\n", &child)) {
+	if (!TERM("\n")) {
+		for (auto p : list)
+			delete p;
+
 		return false;
 	}
 
-	if (list.size() > 0) {
-		*tree = new Tree("ROWS", start, m_input - start);
-		(*tree)->m_children = list;
-	}
+	*tree = new Tree("ROWS", start, m_input - start);
+	(*tree)->m_children = list;
 
 	return true;
 }
@@ -380,71 +353,42 @@ bool SceneParser::ROW(Tree** tree) {
 	while (VECTOR3(&child)) {
 		list.push_back(child);
 
-		if (!TERM(", ", &child)) {
+		if (!TERM(", ")) {
 			break;
 		}
 	}
 
-	if (list.size() > 0) {
-		*tree = new Tree("ROW", start, m_input - start);
-		(*tree)->m_children = list;
-	}
+	
+	*tree = new Tree("ROW", start, m_input - start);
+	(*tree)->m_children = list;
 
 	return true;
-}
-
-bool SceneParser::ROWLAST(Tree** tree) {
-	/*Tree* child = nullptr;
-	char* start = m_input;
-
-	while (VECTOR3(&child)) {
-		list.push_back(child);
-
-		if (!TERM(", ", &child)) {
-			break;
-		}
-	}
-
-	*/
-	return false;
 }
 
 bool SceneParser::LUA(Tree** tree) {// LUA:	"Mesh(" STRING ")\n" LBODY
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
-	Tree* child4 = nullptr;
 	char* start = m_input;
 
-	if (TERM("Mesh(", &child1) && STRING(&child2) && TERM(")\n", &child3) && LBODY(&child4) && TERM("\n", &child3)) {
+	if (TERM("Mesh(") && STRING(&child1) && TERM(")\n") && LBODY(&child2) && TERM("\n")) {
 		*tree = new Tree("LUA", start, m_input - start);
-		//(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
-		//(*tree)->m_children.push_back(child3);
-		(*tree)->m_children.push_back(child4);
 
 		return true;
 	}
+
+	delete child1;
 
 	return false;
 }
 
 bool SceneParser::LBODY(Tree** tree) {// LBODY: "Lua(<\n" CODE ">)\n"
-	Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
-	Tree* child4 = nullptr;
+	Tree* child = nullptr;
 	char* start = m_input;
 
-	if (TERM("Lua(<", &child1) && CODE(&child2) && TERM(">)", &child3)) {
-		//*tree = new Tree("LUA", start, m_input - start);
-		
-		//(*tree)->m_children.push_back(child1);
-		//(*tree)->m_children.push_back(child2);
-		//(*tree)->m_children.push_back(child3);
-		//(*tree)->m_children.push_back(child4);
-
-		*tree = child2;
+	if (TERM("Lua(<") && CODE(&child) && TERM(">)")) {
+		*tree = child;
 
 		return true;
 	}
@@ -455,9 +399,8 @@ bool SceneParser::LBODY(Tree** tree) {// LBODY: "Lua(<\n" CODE ">)\n"
 bool SceneParser::CODE(Tree** tree) {// CODE: [^">)"]*
 	Tree* child;
 	char* start = m_input;
-	//bool running = true;
 
-	while (!TERM(">)", &child)) {
+	while (!TERM(">)")) {
 		m_input++;
 	}
 	m_input -= 2;
@@ -479,29 +422,29 @@ bool SceneParser::WHITESPACE() {// WHITESPACE:	['\t'' ''\n']*
 bool SceneParser::TRANSFORM(Tree** tree) {//WHITESPACE "Transform(" WHITESPACE LBODY "," WHITESPACE SMESH "))" WHITESPACE
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
 	char* start = m_input;
 
 	WHITESPACE();
 
-	if (TERM("Transform(", &child1) && WHITESPACE() && LBODY(&child1) && TERM(",", &child2) && WHITESPACE() && SMESH(&child2) && TERM(")", &child3)) {
+	if (TERM("Transform(") && WHITESPACE() && LBODY(&child1) && TERM(",") && WHITESPACE() && SMESH(&child2) && TERM(")")) {
 		*tree = new Tree("Transform", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
 		return true;
 	}
+
+	delete child1;
+
 	return false;
 }
 
 bool SceneParser::SCENE(Tree** tree) {// SCENE:	"Scene()" SBODY
-	Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
+	Tree* child = nullptr;
 	char* start = m_input;
 
-	if (TERM("Scene()", &child1) && SBODY(&child2)) {
+	if (TERM("Scene()") && SBODY(&child)) {
 		*tree = new Tree("SCENE", start, m_input - start);
-		//(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child);
 
 		return true;
 	}
@@ -510,21 +453,16 @@ bool SceneParser::SCENE(Tree** tree) {// SCENE:	"Scene()" SBODY
 }
 
 bool SceneParser::MBODY(Tree** tree) {// MBODY:	"\n{\n" TRIANGLES "}\n"
-	Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
+	Tree* child = nullptr;
 	char* start = m_input;
 
-	if (TERM("\n{\n", &child1) && TRIANGLES(&child2) && TERM("}\n", &child3)) {
-		//*tree = new Tree("MBODY", start, m_input - start);
-		//(*tree)->m_children.push_back(child1);
-		//(*tree)->m_children.push_back(child2);
-		//(*tree)->m_children.push_back(child3);
-
-		*tree = child2;
+	if (TERM("\n{\n") && TRIANGLES(&child) && TERM("}\n")) {
+		*tree = child;
 
 		return true;
 	}
+
+	delete child;
 
 	return false;
 }
@@ -538,7 +476,7 @@ bool SceneParser::TRIANGLES(Tree** tree) {// TRIANGLES:	TRIANGLE* | TRIANGLE5*
 	while (TRIANGLE(&child)) {
 		list.push_back(child);
 
-		if (!TERM(",\n", &child)) {
+		if (!TERM(",\n")) {
 			comma = false;
 			break;
 		}
@@ -547,20 +485,23 @@ bool SceneParser::TRIANGLES(Tree** tree) {// TRIANGLES:	TRIANGLE* | TRIANGLE5*
 	while (TRIANGLE5(&child)) {
 		list.push_back(child);
 
-		if (!TERM(",\n", &child)) {
+		if (!TERM(",\n")) {
 			comma = false;
 			break;
 		}
 	}
 
-	if (!comma && !TERM("\n", &child)) {
+	if (!comma && !TERM("\n")) {
+		for (auto p : list)
+			delete p;
+
 		return false;
 	}
 
-	if (list.size() > 0) {
-		*tree = new Tree("TRIANGLES", start, m_input - start);
-		(*tree)->m_children = list;
-	}
+	
+	*tree = new Tree("TRIANGLES", start, m_input - start);
+	(*tree)->m_children = list;
+	
 
 	return true;
 }
@@ -569,20 +510,22 @@ bool SceneParser::TRIANGLE(Tree** tree) {// TRIANGLE:	VECTOR3 ",\n" VECTOR3 ",\n
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	Tree* child3 = nullptr;
-	Tree* child4 = nullptr;
-	Tree* child5 = nullptr;
 	char* start = m_input;
 
-	if (WHITESPACE() && VECTOR3(&child1) && TERM(",\n", &child2) && WHITESPACE() && VECTOR3(&child3) && TERM(",\n", &child4) && WHITESPACE() && VECTOR3(&child5)) {
+	if (WHITESPACE() && VECTOR3(&child1) && TERM(",\n") && WHITESPACE() && VECTOR3(&child2) && TERM(",\n") && WHITESPACE() && VECTOR3(&child3)) {
 		*tree = new Tree("TRIANGLE", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
-		//(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child2);
 		(*tree)->m_children.push_back(child3);
-		//(*tree)->m_children.push_back(child4);
-		(*tree)->m_children.push_back(child5);
 
 		return true;
 	}
+
+	m_input = start;
+
+	delete child1;
+	delete child2;
+	delete child3;
 
 	return false;
 }
@@ -591,20 +534,22 @@ bool SceneParser::TRIANGLE5(Tree** tree) {//VECTOR5 ",\n" VECTOR5 ",\n" VECTOR5
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	Tree* child3 = nullptr;
-	Tree* child4 = nullptr;
-	Tree* child5 = nullptr;
 	char* start = m_input;
 
-	if (WHITESPACE() && VECTOR5(&child1) && TERM(",", &child2) && WHITESPACE() && VECTOR5(&child3) && TERM(",", &child4) && WHITESPACE() && VECTOR5(&child5)) {
+	if (WHITESPACE() && VECTOR5(&child1) && TERM(",") && WHITESPACE() && VECTOR5(&child2) && TERM(",") && WHITESPACE() && VECTOR5(&child3)) {
 		*tree = new Tree("TRIANGLE", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
-		//(*tree)->m_children.push_back(child2);
+		(*tree)->m_children.push_back(child2);
 		(*tree)->m_children.push_back(child3);
-		//(*tree)->m_children.push_back(child4);
-		(*tree)->m_children.push_back(child5);
 
 		return true;
 	}
+
+	m_input = start;
+
+	delete child1;
+	delete child2;
+	delete child3;
 
 	return false;
 }
@@ -613,24 +558,23 @@ bool SceneParser::VECTOR3(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER ")"
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	Tree* child3 = nullptr;
-	Tree* child4 = nullptr;
-	Tree* child5 = nullptr;
-	Tree* child6 = nullptr;
-	Tree* child7 = nullptr;
 	char* start = m_input;
-	if (TERM("(", &child1) && NUMBER(&child2) && TERM(",", &child3) && NUMBER(&child4) && TERM(",", &child5) && NUMBER(&child6) && TERM(")", &child7)) {
+	if (TERM("(") && NUMBER(&child1) && TERM(",") && NUMBER(&child2) && TERM(",") && NUMBER(&child3) && TERM(")")) {
 		*tree = new Tree("VECTOR3", start, m_input - start);
-		//(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
-		//(*tree)->m_children.push_back(child3);
-		(*tree)->m_children.push_back(child4);
-		//(*tree)->m_children.push_back(child5);
-		(*tree)->m_children.push_back(child6);
-		//(*tree)->m_children.push_back(child7);
+		(*tree)->m_children.push_back(child3);
 
 		return true;
 	}
-	m_input = start; //do we need this i think important yes very important
+
+	m_input = start;
+
+	delete child1;
+	delete child2;
+	delete child3;
+
+
 	return false;
 }
 
@@ -640,46 +584,26 @@ bool SceneParser::VECTOR5(Tree** tree) {//"(" NUMBER "," NUMBER "," NUMBER "," N
 	Tree* child3 = nullptr;
 	Tree* child4 = nullptr;
 	Tree* child5 = nullptr;
-	Tree* child6 = nullptr;
-	Tree* child7 = nullptr;
-	Tree* child8 = nullptr;
-	Tree* child9 = nullptr;
 	char* start = m_input;
 
-	if (TERM("(", &child1) && NUMBER(&child2) && TERM(",", &child3) && NUMBER(&child4) && TERM(",", &child5) && NUMBER(&child6) && TERM(",", &child5) && NUMBER(&child7) && TERM(",", &child5) && NUMBER(&child8) && TERM(")", &child9)) {
+	if (TERM("(") && NUMBER(&child1) && TERM(",") && NUMBER(&child2) && TERM(",") && NUMBER(&child3) && TERM(",") && NUMBER(&child4) && TERM(",") && NUMBER(&child5) && TERM(")")) {
 		*tree = new Tree("VECTOR3", start, m_input - start);
-		//(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
-		//(*tree)->m_children.push_back(child3);
+		(*tree)->m_children.push_back(child3);
 		(*tree)->m_children.push_back(child4);
-		//(*tree)->m_children.push_back(child5);
-		(*tree)->m_children.push_back(child6);
-		//(*tree)->m_children.push_back(child7);
-		(*tree)->m_children.push_back(child7);
-		(*tree)->m_children.push_back(child8);
+		(*tree)->m_children.push_back(child5);
 
 		return true;
 	}
-	return false;
-}
 
-bool SceneParser::TSEPERATOR(Tree** tree) {// TSEPERATOR: ",\n" TRIANGLE | "\n"
-	/*Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
-	char* start = m_input;
+	m_input = start;
 
-	if (TERM(",\n", &child1) && TRIANGLE(&child2)) {
-		*tree = new Tree("TSEPERATOR", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
-		return true;
-	}
-	if (TERM("\n", &child1)) {
-		*tree = new Tree("TSEPERATOR", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-
-		return true;
-	}*/
+	delete child1;
+	delete child2;
+	delete child3;
+	delete child4;
+	delete child5;
 
 	return false;
 }
@@ -688,7 +612,7 @@ bool SceneParser::NUMBER(Tree** tree) {//"-"[0 - 9] * | [0 - 9] *
 	char *start = m_input;
 	Tree *child = nullptr;
 
-	if (TERM("-", &child)) {
+	if (TERM("-")) {
 		int nr = sDigit.match(m_input);
 		if (nr > 0) {
 			m_input += nr;
@@ -711,43 +635,42 @@ bool SceneParser::NUMBER(Tree** tree) {//"-"[0 - 9] * | [0 - 9] *
 
 
 bool SceneParser::SBODY(Tree** tree) {// SBODY:	"\n{\n" SFUNCTIONS* "}"
-	Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
+	Tree* child = nullptr;
 	char *start = m_input;
+	std::list<Tree*> list;
 
-	if (TERM("\n{\n", &child1)) {
-		std::list<Tree*> list;
+	if (TERM("\n{\n")) {
 
-		while (SFUNCTIONS(&child2)) {
-			list.push_back(child2);
-		//(*tree)->m_children.push_back(child1);
-		//(*tree)->m_children.push_back(child2);
-		//(*tree)->m_children.push_back(child3);
+		while (SFUNCTIONS(&child)) {
+			list.push_back(child);
 		}
 
-		if (TERM("}", &child3)) {
+		if (TERM("}")) {
 
 			*tree = new Tree("SBODY", start, m_input - start);
 			(*tree)->m_children = list;
 			return true;
 		}
-
-		return false;
 	}
+
+	for (auto p : list)
+		delete p;
+
 	return false;
 }
 
 bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
-	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
+	Tree *child = nullptr;
 	char* start = m_input;
 	
 	WHITESPACE();
-	if (SMESH(&child1)) {
-		*tree = child1;
+	if (SMESH(&child)) {
+		*tree = child;
+
+		return true;
 	}
-	else if (BIND(&child2) && TERM(")", &child4)) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
-		*tree = child2;
+	else if (BIND(&child) && TERM(")")) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
+		*tree = child;
 
 		return true;
 	}
@@ -756,123 +679,46 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 }
 
 bool SceneParser::BIND(Tree** tree) {//"Bind" "(" STRING ", " SMESH ")\n" | "Bind" "(" STRING ", TRANSFORM 
-	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
+	Tree* child1 = nullptr;
+	Tree* child2 = nullptr;
 	char *start = m_input;
 
-	if (TERM("Bind", &child1) && TERM("(", &child2) && STRING(&child3) && TERM(",", &child2) && WHITESPACE()) {// && (SMESH(&child1) || TRANSFORM(&child1)) {//TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4)) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
-		if (SMESH(&child1)) {
+	if (TERM("Bind") && TERM("(") && STRING(&child1) && TERM(",") && WHITESPACE()) {// && (SMESH(&child1) || TRANSFORM(&child1)) {//TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4)) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
+		if (SMESH(&child2)) {
 			*tree = new Tree("Bind", start, m_input - start);
+			(*tree)->m_children.push_back(child2);
 			(*tree)->m_children.push_back(child1);
-			//(*tree)->m_children.push_back(child2);
-			(*tree)->m_children.push_back(child3);
-			
-		}
-		
-		else if (WHITESPACE() && TRANSFORM(&child1)) {
-			*tree = child1;
-			(*tree)->m_children.push_back(child3);
-		}
 
-		return true;
+			return true;
+		}
+		else if (WHITESPACE() && TRANSFORM(&child2)) {
+			*tree = child2;
+			(*tree)->m_children.push_back(child1);
+
+			return true;
+		}
 	}
+
+	delete child1;
+	delete child2;
+
 	return false;
 }
 
 bool SceneParser::SMESH(Tree** tree = nullptr) {
-	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
+	Tree *child = nullptr;
 	char* start = m_input;
 
-	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")", &child3) && WHITESPACE()) {// SMESH: "Mesh" "(" STRING ")\n"
-		*tree = child2;
-		if (child1)
-			//(*tree)->m_children.push_back(child1);
-			if (child2)
-			//	(*tree)->m_children.push_back(child2);
-		if (child3)
-			//(*tree)->m_children.push_back(child3);
-			if (child4);
-		//(*tree)->m_children.push_back(child4);
+	if (TERM("Mesh") && TERM("(") && STRING(&child) && TERM(")") && WHITESPACE()) {// SMESH: "Mesh" "(" STRING ")\n"
+		*tree = child;
 
 		return true;
 	}
-}
 
-/*bool SceneParser::FIELDSEP(Tree **result) {  // FIELDSEP : "," | ";"
-	Tree *child1;
-	char *start = m_input;
-	if (!TERM(",", &child1) ||
-		TERM(";", &child1))   return false;
-	*result = new Tree("FIELDSEP", start, m_input - start);
-	(*result)->m_children.push_back(child1);
-	return true;
-}*/
-
-/*bool SceneParser::TABLE(Tree** tree) {
-	Tree* child1;
-	Tree* child2;
-	Tree* child3 = nullptr;
-	char* start = m_input;
-
-	if (TERM("{", &child1) && TABLE2(&child3) && TERM("}", &child2)) {
-		*tree = new Tree("TABLE", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-		if (child3)
-			(*tree)->m_children.push_back(child3);
-		(*tree)->m_children.push_back(child2);
-
-		return true;
-	}
+	delete child;
 
 	return false;
-}*/
-
-/*bool SceneParser::TABLE2(Tree** tree) {
-	Tree* child1;
-	char* start = m_input;
-
-	if (TABLE(&child1) || NUM(&child1) || STRING(&child1) || KEY(&child1)) {
-		*tree = new Tree("TABLE2", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-
-		child1 = nullptr;
-		if (LIST(&child1)) {
-			//*tree = new Tree("TABLE2", start, input - start);
-			if (child1)
-				(*tree)->m_children.push_back(child1);
-
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-
-	return true;
-}*/
-
-/*bool SceneParser::LIST(Tree** tree) {
-	Tree* child1;
-	char* start = m_input;
-
-	if (TERM(",", &child1) || TERM(";", &child1)) {
-		*tree = new Tree("LIST", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-
-		child1 = nullptr;
-		if (TABLE2(&child1)) {
-			if (child1)
-				(*tree)->m_children.push_back(child1);
-
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
-
-	return true;
-}*/
+}
 
 bool SceneParser::WORD(Tree** tree) {
 	char* start = m_input;
@@ -888,91 +734,21 @@ bool SceneParser::WORD(Tree** tree) {
 }
 
 bool SceneParser::STRING(Tree** tree) {
-	Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
+	Tree* child = nullptr;
 	char* start = m_input;
 
-	if (TERM("\"", &child1) && WORD(&child2) && TERM("\"", &child3)) {
-		//*tree = new Tree("STRING", start, m_input - start);
-		//(*tree)->m_children.push_back(child1);
-		//(*tree)->m_children.push_back(child2);
-		//(*tree)->m_children.push_back(child3);
-
-		*tree = child2;
+	if (TERM("\"") && WORD(&child) && TERM("\"")) {
+		*tree = child;
 
 		return true;
 	}
 
+	delete child;
+
 	return false;
 }
 
-bool SceneParser::DEC(Tree** tree) {
-	char* start = m_input;
-	int n;
-	if ((n = number.match(m_input)) < 0)
-		return false;
-
-	m_input += n;
-	*tree = new Tree("DEC", start, m_input - start);
-
-	return true;
-}
-
-/*bool SceneParser::HEX(Tree** tree) {
-	char* start = m_input;
-	int n;
-	if ((n = hexnumber.match(m_input)) < 0)
-		return false;
-
-	m_input += n;
-	*tree = new Tree("HEX", start, m_input - start);
-
-	return true;
-}*/
-
-/*bool SceneParser::KEY(Tree** tree) {
-	Tree* child1 = nullptr;
-	Tree* child2 = nullptr;
-	Tree* child3 = nullptr;
-	char* start = m_input;
-
-	if ((WORD(&child1) && TERM("=", &child2)) || (TERM("[", &child1) && (WORD(&child2) || STRING(&child2) || NUM(&child2)) && TERM("]=", &child3))) {
-		*tree = new Tree("KEY", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child2);
-
-		if (child3)
-			(*tree)->m_children.push_back(child3);
-
-		child1 = nullptr;
-		if (VALUE(&child1)) {
-			(*tree)->m_children.push_back(child1);
-
-			return true;
-		}
-
-		return false;
-	}
-
-	return false;
-}*/
-
-/*bool SceneParser::VALUE(Tree** tree) {
-	Tree* child1;
-	char* start = m_input;
-
-	if (TABLE(&child1) || NUM(&child1) || STRING(&child1)) {
-		*tree = new Tree("VALUE", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-
-		return true;
-	}
-
-	return false;
-}*/
-
-bool SceneParser::TERM(const char *lit, Tree** tree)
+bool SceneParser::TERM(const char *lit)
 {
 	int i;
 	char* start = m_input;
@@ -981,21 +757,5 @@ bool SceneParser::TERM(const char *lit, Tree** tree)
 			return false;
 	m_input += i;
 
-	*tree = new Tree("TERM", start, m_input - start);
-
 	return true;
 }
-
-/*bool SceneParser::NUM(Tree** tree) {
-	Tree* child1;
-	char* start = m_input;
-
-	if (HEX(&child1) || DEC(&child1)) {
-		*tree = new Tree("NUM", start, m_input - start);
-		(*tree)->m_children.push_back(child1);
-
-		return true;
-	}
-
-	return false;
-}*/

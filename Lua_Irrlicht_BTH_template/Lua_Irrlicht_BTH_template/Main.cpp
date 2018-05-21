@@ -37,42 +37,12 @@ int main()
 	
 	App app;
 	std::thread conThread(ConsoleThread, app.getLuaState());
-
-	
-	std::cout << "I'm helping\n";
-	
-
-	//mesh stuff
-	/*irr::scene::IAnimatedMesh* mesh = smgr->getMesh("../../Bin/Meshes/sydney.md2");
-	if (!mesh)
-	{
-		device->drop();
-		return 1;
-	}
-	irr::scene::IAnimatedMeshSceneNode* node = smgr->addAnimatedMeshSceneNode(mesh);
-	if (node)
-	{
-		node->setMaterialFlag(irr::video::EMF_LIGHTING, false);
-		node->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
-		node->setMD2Animation(irr::scene::EMAT_STAND);
-		node->setMaterialTexture(0, driver->getTexture("../../Bin/Meshes/sydney.bmp"));
-	}*/
-	
-	//smgr->addCameraSceneNode(0, irr::core::vector3df(0, 30, -40), irr::core::vector3df(0, 5, 0));
-	
-	//end mesh stuff
-	
-	
 	
 	while(app.run()) {
 		app.draw();	
 	}
 	_CrtDumpMemoryLeaks();
-	//device->drop();
-	//conThread.detach();
 	conThread.join();
-
-	//int *p = new int[20];
 
 	return 0;
 }
