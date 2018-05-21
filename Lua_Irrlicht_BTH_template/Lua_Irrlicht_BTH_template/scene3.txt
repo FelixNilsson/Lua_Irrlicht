@@ -76,5 +76,8 @@ Mesh("square")
 Scene()
 {
   Bind("checkerboard2", Mesh("bumpycyc"))
+  Bind("checkerboard",
+        Transform( Lua(< local args = {...} return args[1]+10, args[2], args[3], args[4], args[5] >),
+                   Mesh("bumpycyc")))
   Bind("checkerboard", Mesh("square"))
 }

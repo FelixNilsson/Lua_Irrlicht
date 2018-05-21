@@ -35,7 +35,7 @@ SceneParser::SceneParser(char* input) : m_input(input), digit("0123456789"), hex
 letters("QWERTYUIOPASDFGHJKLMNBVCXZqwertyuiopasdfghjklzxcvbnm"), sDigit(&digit), number({ &nonzero, &sDigit }), zero("0"), x("x"), sHex(&hex),
 hexnumber({ &zero, &x, &hex, &sHex }), sLetters(&letters), word({ &letters, &sLetters, &sDigit }) {
 	if (FILE(&m_root)) {
-		m_root->dump();
+		//m_root->dump();
 		std::cout << "Succes with parsing" << std::endl;
 	}
 	else
@@ -414,7 +414,7 @@ bool SceneParser::LBODY(Tree** tree) {// LBODY: "Lua(<\n" CODE ">)\n"
 	Tree* child4 = nullptr;
 	char* start = m_input;
 
-	if (TERM("Lua(<\n", &child1) && CODE(&child2) && TERM(">)", &child3)) {
+	if (TERM("Lua(<", &child1) && CODE(&child2) && TERM(">)", &child3)) {
 		//*tree = new Tree("LUA", start, m_input - start);
 		
 		//(*tree)->m_children.push_back(child1);
@@ -462,7 +462,7 @@ bool SceneParser::TRANSFORM(Tree** tree) {//WHITESPACE "Transform(" WHITESPACE L
 
 	WHITESPACE();
 
-	if (TERM("Transform(", &child1) && WHITESPACE() && LBODY(&child1) && TERM(",", &child2) && WHITESPACE() && SMESH(&child2) && TERM("))", &child3)) {
+	if (TERM("Transform(", &child1) && WHITESPACE() && LBODY(&child1) && TERM(",", &child2) && WHITESPACE() && SMESH(&child2) && TERM(")", &child3)) {
 		*tree = new Tree("Transform", start, m_input - start);
 		(*tree)->m_children.push_back(child1);
 		(*tree)->m_children.push_back(child2);
@@ -724,14 +724,8 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	if (SMESH(&child1)) {
 		*tree = child1;
 	}
-	
-	else if (TERM("Bind", &child1) && TERM("(", &child2) && STRING(&child3) && TERM(", ", &child2) && TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4) ) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
-		*tree = new Tree("Bind", start, m_input - start);
-
-		
-		(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child3);
-		(*tree)->m_children.push_back(child2);
+	else if (BIND(&child2) && TERM(")", &child4)) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
+		*tree = child2;
 
 		return true;
 	}
@@ -743,17 +737,18 @@ bool SceneParser::BIND(Tree** tree) {//"Bind" "(" STRING ", " SMESH ")\n" | "Bin
 	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
 	char *start = m_input;
 
-	if (TERM("Bind", &child1) && TERM("(", &child2) && STRING(&child3) && TERM(", ", &child2)) {// && (SMESH(&child1) || TRANSFORM(&child1)) {//TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4)) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
+	if (TERM("Bind", &child1) && TERM("(", &child2) && STRING(&child3) && TERM(",", &child2) && WHITESPACE()) {// && (SMESH(&child1) || TRANSFORM(&child1)) {//TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4)) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
 		if (SMESH(&child1)) {
 			*tree = new Tree("Bind", start, m_input - start);
+			(*tree)->m_children.push_back(child1);
+			(*tree)->m_children.push_back(child2);
+			(*tree)->m_children.push_back(child3);
 		}
 		
-		else if (TRANSFORM(&child1)) {
+		else if (WHITESPACE() && TRANSFORM(&child1)) {
 			*tree = new Tree("Transform", start, m_input - start);
+			(*tree)->m_children.push_back(child1);
 		}
-		(*tree)->m_children.push_back(child1);
-		(*tree)->m_children.push_back(child3);
-		(*tree)->m_children.push_back(child2);
 
 		return true;
 	}
@@ -764,7 +759,7 @@ bool SceneParser::SMESH(Tree** tree = nullptr) {
 	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
 	char* start = m_input;
 
-	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")\n", &child3)) {// SMESH: "Mesh" "(" STRING ")\n"
+	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")", &child3) && WHITESPACE()) {// SMESH: "Mesh" "(" STRING ")\n"
 		*tree = new Tree("Mesh", start, m_input - start);
 		if (child1)
 			//(*tree)->m_children.push_back(child1);
