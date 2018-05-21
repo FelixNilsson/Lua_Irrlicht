@@ -73,9 +73,9 @@ void SceneParser::buildScene(lua_State* L) const {
 			std::cout << "bind" << std::endl;
 			//std::list<Tree*>::iterator it = p->m_children.end();
 			//it--;
-			buildMesh(L, p->m_children.front()->m_children.front()->m_lexeme);
+			buildMesh(L, p->m_children.front()->m_lexeme);
 			lua_getglobal(L, "bind");
-			lua_pushstring(L, p->m_children.front()->m_children.front()->m_lexeme.c_str());
+			lua_pushstring(L, p->m_children.front()->m_lexeme.c_str());
 			//it--;
 			lua_pushstring(L, p->m_children.back()->m_lexeme.c_str());
 			lua_pcall(L, 2, 0, 0);
@@ -764,11 +764,11 @@ bool SceneParser::SMESH(Tree** tree = nullptr) {
 	char* start = m_input;
 
 	if (TERM("Mesh", &child1) && TERM("(", &child4) && STRING(&child2) && TERM(")", &child3) && WHITESPACE()) {// SMESH: "Mesh" "(" STRING ")\n"
-		*tree = new Tree("Mesh", start, m_input - start);
+		*tree = child2;
 		if (child1)
 			//(*tree)->m_children.push_back(child1);
 			if (child2)
-				(*tree)->m_children.push_back(child2);
+			//	(*tree)->m_children.push_back(child2);
 		if (child3)
 			//(*tree)->m_children.push_back(child3);
 			if (child4);
