@@ -64,21 +64,24 @@ void SceneParser::buildScene(lua_State* L) const {
 	tree = tree->m_children.back();
 
 	for (auto p : tree->m_children) {
-
+		
 		if (p->m_tag == "Mesh") {
 			std::cout << p->m_children.front()->m_lexeme << std::endl;
 			buildMesh(L, p->m_children.front()->m_lexeme);
 		}
 		else if (p->m_tag == "Bind") {
 			std::cout << "bind" << std::endl;
-			std::list<Tree*>::iterator it = p->m_children.end();
-			it--;
-			buildMesh(L, (*it)->m_lexeme);
+			//std::list<Tree*>::iterator it = p->m_children.end();
+			//it--;
+			buildMesh(L, p->m_children.front()->m_children.front()->m_lexeme);
 			lua_getglobal(L, "bind");
-			lua_pushstring(L, (*it)->m_lexeme.c_str());
-			it--;
-			lua_pushstring(L, (*it)->m_lexeme.c_str());
+			lua_pushstring(L, p->m_children.front()->m_children.front()->m_lexeme.c_str());
+			//it--;
+			lua_pushstring(L, p->m_children.back()->m_lexeme.c_str());
 			lua_pcall(L, 2, 0, 0);
+		}
+		else if (p->m_tag == "Transform") {
+			std::cout << "transform" << std::endl;
 		}
 		else
 			std::cout << "nay" << std::endl;
@@ -741,8 +744,9 @@ bool SceneParser::BIND(Tree** tree) {//"Bind" "(" STRING ", " SMESH ")\n" | "Bin
 		if (SMESH(&child1)) {
 			*tree = new Tree("Bind", start, m_input - start);
 			(*tree)->m_children.push_back(child1);
-			(*tree)->m_children.push_back(child2);
+			//(*tree)->m_children.push_back(child2);
 			(*tree)->m_children.push_back(child3);
+			
 		}
 		
 		else if (WHITESPACE() && TRANSFORM(&child1)) {
