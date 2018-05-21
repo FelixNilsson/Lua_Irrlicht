@@ -82,6 +82,7 @@ void SceneParser::buildScene(lua_State* L) const {
 		}
 		else if (p->m_tag == "Transform") {
 			std::cout << "transform" << std::endl;
+			buildMesh(L, p->m_children.back()->m_lexeme, p->m_children.front()->m_lexeme.c_str());
 		}
 		else
 			std::cout << "nay" << std::endl;
@@ -94,7 +95,7 @@ void SceneParser::buildScene(lua_State* L) const {
 
 }
 
-void SceneParser::buildMesh(lua_State* L, std::string& arg) const {
+void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) const {
 	Tree* tree = nullptr;
 	bool code = false;
 
@@ -127,10 +128,17 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg) const {
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
 		}
-
-		if (luaL_loadstring(L, "local args = {...} return args[1]+10, args[2], args[3], args[4], args[5]")) {//2
-			std::cout << lua_tostring(L, -1) << '\n';
-			lua_pop(L, 1);
+		if (p) {
+			if (luaL_loadstring(L, p)) {//2
+				std::cout << lua_tostring(L, -1) << '\n';
+				lua_pop(L, 1);
+			}
+		}
+		else {
+			if (luaL_loadstring(L, "local args = {...} return args[1]-10, args[2], args[3], args[4], args[5]")) {//2
+				std::cout << lua_tostring(L, -1) << '\n';
+				lua_pop(L, 1);
+			}
 		}
 		if (/*luaL_loadstring(L, "local args = {...} return args[1]+10, args[2], args[3], args[4], args[5]") ||*/ lua_pcall(L, 2, 1, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
@@ -750,8 +758,7 @@ bool SceneParser::BIND(Tree** tree) {//"Bind" "(" STRING ", " SMESH ")\n" | "Bin
 		}
 		
 		else if (WHITESPACE() && TRANSFORM(&child1)) {
-			*tree = new Tree("Transform", start, m_input - start);
-			(*tree)->m_children.push_back(child1);
+			*tree = child1;
 		}
 
 		return true;
