@@ -739,6 +739,27 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	return false;
 }
 
+bool SceneParser::BIND(Tree** tree) {//"Bind" "(" STRING ", " SMESH ")\n" | "Bind" "(" STRING ", TRANSFORM 
+	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
+	char *start = m_input;
+
+	if (TERM("Bind", &child1) && TERM("(", &child2) && STRING(&child3) && TERM(", ", &child2)) {// && (SMESH(&child1) || TRANSFORM(&child1)) {//TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4)) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
+		if (SMESH(&child1)) {
+			*tree = new Tree("Bind", start, m_input - start);
+		}
+		
+		else if (TRANSFORM(&child1)) {
+			*tree = new Tree("Transform", start, m_input - start);
+		}
+		(*tree)->m_children.push_back(child1);
+		(*tree)->m_children.push_back(child3);
+		(*tree)->m_children.push_back(child2);
+
+		return true;
+	}
+	return false;
+}
+
 bool SceneParser::SMESH(Tree** tree = nullptr) {
 	Tree *child1 = nullptr, *child2 = nullptr, *child3 = nullptr, *child4 = nullptr;
 	char* start = m_input;

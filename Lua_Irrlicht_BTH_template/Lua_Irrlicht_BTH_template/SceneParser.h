@@ -52,6 +52,7 @@ private:
 	bool SBODY(Tree** tree);
 	bool SFUNCTIONS(Tree** tree);
 	bool TRANSFORM(Tree** tree);
+	bool BIND(Tree** tree);
 	bool SMESH(Tree** tree);
 
 	bool TERM(const char *lit, Tree** = nullptr);
