@@ -8,7 +8,7 @@ class SceneParser
 {
 private:
 	char* m_input;
-	Tree* m_root;
+	Tree* m_root = nullptr;
 	int m_counter = 1;
 
 	CharClass digit;

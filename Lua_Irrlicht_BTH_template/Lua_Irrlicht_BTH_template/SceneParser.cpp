@@ -1,6 +1,13 @@
 #include "SceneParser.h"
 #include <iostream>
 
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#ifdef _DEBUG
+#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
+#define new DEBUG_NEW
+#endif
+
 // FILE:		FUNCTION* | SCENE
 // FUNCTION:	MESH | LUA | TEXTURE 
 // MESH:		"Mesh(" STRING ")" MBODY
@@ -44,6 +51,7 @@ hexnumber({ &zero, &x, &hex, &sHex }), sLetters(&letters), word({ &letters, &sLe
 
 
 SceneParser::~SceneParser() {
+	delete m_root;
 }
 
 void SceneParser::buildScene(lua_State* L) {
@@ -151,7 +159,7 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 				lua_pop(L, 1);
 			}
 		}
-		if (/*luaL_loadstring(L, "local args = {...} return args[1]+10, args[2], args[3], args[4], args[5]") ||*/ lua_pcall(L, 2, 1, 0)) {
+		if (lua_pcall(L, 2, 1, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
 		}

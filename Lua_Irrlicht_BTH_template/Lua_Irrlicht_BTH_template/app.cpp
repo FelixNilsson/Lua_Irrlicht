@@ -11,7 +11,7 @@
 #ifdef _DEBUG
 #define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
 #define new DEBUG_NEW
-#endif 
+#endif
 
 using namespace irr;
 using namespace scene;
@@ -193,6 +193,7 @@ App::App()
 
 	if (!m_device) {
 		//error
+		return;
 	}
 	m_device->setWindowCaption(L"Hello World! - Irrlicht Engine Demo");
 	m_driver = m_device->getVideoDriver();
@@ -213,7 +214,7 @@ App::App()
 	keymap[4].Action = irr::EKA_JUMP_UP;
 	keymap[4].KeyCode = irr::KEY_SPACE;
 
-	auto node = m_smgr->addCameraSceneNodeFPS(0, 100, 0.1, -1, keymap, 5, false, 100, false, true);
+	auto node = m_smgr->addCameraSceneNodeFPS(0, 100, 0.05, -1, keymap, 5, false, 100, false, true);
 	node->setName("camera");
 
 	this->L = luaL_newstate();
@@ -256,7 +257,6 @@ bool App::run()
 
 void App::draw()
 {
-
 	if (m_device->isWindowActive()) {
 		m_smgr->getActiveCamera()->setInputReceiverEnabled(true);
 		
@@ -298,7 +298,6 @@ int App::addMesh(lua_State * L)
 	SMeshBuffer* buffer = new SMeshBuffer();
 	mesh->addMeshBuffer(buffer);
 	buffer->drop();
-	//int index = 1;
 	int type;
 	lua_len(L, -1);
 	int length = lua_tointeger(L, -1);
@@ -312,7 +311,7 @@ int App::addMesh(lua_State * L)
 	if (lua_rawlen(L, -1) == 3)
 		vec3 = true;
 	lua_pop(L, 1);
-	for (int i = 0; i < length && !error; i++) /*((type = lua_geti(L, -1, index)) == LUA_TTABLE)*/ {
+	for (int i = 0; i < length && !error; i++) {
 		lua_geti(L, -1, i + 1);
 		if (vec3 && isVector(L, vec)) {
 			list.push_back(vec);
@@ -457,7 +456,9 @@ int App::snapshot(lua_State * L)
 		irr::video::IImage *screenshot = m_driver->createScreenShot();
 		irr::io::path path(irr::core::string<char*>(name.c_str()));
 	
-		bool worked = m_driver->writeImageToFile(screenshot, path);
+		if (!m_driver->writeImageToFile(screenshot, path)) {
+			std::cout << "Error: file could not be opened" << std::endl;
+		}
 	}
 	
 	return 0;
@@ -515,9 +516,7 @@ int App::addTexture(lua_State * L)
 				}
 				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(Nr,Nr), (void*)data, false, false);
 				
-				auto debugP = m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
-				if (debugP)
-					std::cout << "texture works" << std::endl;
+				m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
 			}
 		}
 	}
@@ -563,7 +562,7 @@ int App::loadScene(lua_State* L) {
 	std::string filename = lua_tostring(L, -1);
 	std::ifstream t(filename);
 	if (!t.is_open()) {
-		std::cout << "couldnt open file" << std::endl;
+		std::cout << "couldn't open file" << std::endl;
 		return 0;
 	}
 	std::stringstream buffer;
