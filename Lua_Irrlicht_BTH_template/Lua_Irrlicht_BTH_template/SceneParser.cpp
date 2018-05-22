@@ -1,13 +1,6 @@
 #include "SceneParser.h"
 #include <iostream>
 
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-#ifdef _DEBUG
-#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DEBUG_NEW
-#endif
-
 // FILE:		FUNCTION* SCENE
 // FUNCTION:	MESH | LUA | TEXTURE 
 // MESH:		"Mesh(" STRING ")" MBODY
@@ -65,7 +58,6 @@ void SceneParser::buildScene(lua_State* L) {
 	for (auto p : tree->m_children) {
 		
 		if (p->m_tag == "Mesh") {
-			std::cout << p->m_children.front()->m_lexeme << std::endl;
 			buildMesh(L, p->m_children.front()->m_lexeme);
 		}
 		else if (p->m_tag == "Bind") {
@@ -97,7 +89,6 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 	bool code = false;
 
 	for (auto p : m_root->m_children) {
-		//Tree* temp = p->m_children.front();
 		if (p->m_tag == "MESH" && (p->m_children.front()->m_lexeme == arg)) {
 			tree = p->m_children.back();//tree points to triangles
 			break;
@@ -112,7 +103,7 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 	if (!tree)
 		return;
 
-	//tree = tree->m_children.front();
+	
 	if (code) {
 		lua_getglobal(L, "addMesh");
 		
@@ -133,7 +124,6 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 			}
 			arg += std::string(std::to_string(m_counter));
 			m_counter++;
-			//arg = std::string("mesh");
 		}
 		else {
 			if (luaL_loadstring(L, "local args = {...} return args[1], args[2], args[3], args[4], args[5]")) {
@@ -176,16 +166,11 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 }
 
 void SceneParser::buildTexture(lua_State* L) {
-	//Tree* tree = nullptr;
-
 	for (auto p : m_root->m_children) {
-		//Tree* temp = p->m_children.front();
 		if (p->m_tag == "TEXTURE") {
 			addTexture(L, p);
 		}
 	}
-
-
 }
 
 void SceneParser::addTexture(lua_State* L, Tree* tree) {
@@ -196,7 +181,7 @@ void SceneParser::addTexture(lua_State* L, Tree* tree) {
 		lua_getglobal(L, "addTexture");
 
 		// create texture
-		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {//3
+		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
 		}

@@ -6,13 +6,6 @@
 #include <fstream>
 #include <sstream>
 
-#define _CRTDBG_MAP_ALLOC
-#include <crtdbg.h>
-#ifdef _DEBUG
-#define DEBUG_NEW new(_NORMAL_BLOCK, __FILE__, __LINE__)
-#define new DEBUG_NEW
-#endif
-
 using namespace irr;
 using namespace scene;
 using namespace core;
@@ -23,7 +16,7 @@ irr::IrrlichtDevice* App::m_device = nullptr;
 irr::scene::ISceneManager* App::m_smgr = nullptr;
 irr::video::IVideoDriver* App::m_driver = nullptr;
 irr::gui::IGUIEnvironment* App::m_guienv = nullptr;
-int App::m_id = 0;
+int App::m_id = 1;
 
 bool App::isVector(lua_State * L, irr::core::vector3df &vector)
 {
@@ -188,7 +181,6 @@ void App::destroyScene()
 
 App::App()
 {
-	std::cout << new int << std::endl;
 	m_device = irr::createDevice(irr::video::EDT_SOFTWARE, irr::core::dimension2d<irr::u32>(640, 480), 16, false, false, true, 0);
 
 	if (!m_device) {
@@ -294,8 +286,10 @@ int App::addMesh(lua_State * L)
 	
 	std::vector<irr::core::vector3df> list;
 	std::vector<vectorUV> listUV;
-	irr::scene::SMesh* mesh = new SMesh();
-	SMeshBuffer* buffer = new SMeshBuffer();
+	irr::scene::SMesh* mesh = nullptr;
+	mesh = new SMesh();
+	SMeshBuffer* buffer = nullptr;
+	buffer = new SMeshBuffer();
 	mesh->addMeshBuffer(buffer);
 	buffer->drop();
 	int type;
@@ -517,6 +511,7 @@ int App::addTexture(lua_State * L)
 				irr::video::IImage *p = m_driver->createImageFromData(ECOLOR_FORMAT::ECF_R8G8B8, dimension2du(Nr,Nr), (void*)data, false, false);
 				
 				m_driver->addTexture(irr::core::string<char*>(name.c_str()), p, 0);
+				delete[] data;
 			}
 		}
 	}
@@ -583,7 +578,7 @@ lua_State * App::getLuaState()
 }
 
 void App::setupScript() {
-	if (luaL_dofile(L, "test5.lua")) {
+	if (luaL_dofile(L, "setup.lua")) {
 		std::cout << "Couldn't load script" << std::endl;
 		return;
 	}

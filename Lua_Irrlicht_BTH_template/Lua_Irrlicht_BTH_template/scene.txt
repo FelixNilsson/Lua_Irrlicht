@@ -1,6 +1,6 @@
 Mesh("bumpycyc")
-Lua(<
--- Build a planar height map
+  Lua(<
+  -- Build a planar height map
     radius = 5
     bumps = {}
     for row=0,9 do
@@ -50,10 +50,10 @@ Lua(<
 >)
 
 Mesh("cube")
-Lua(<
-  function cube(pos, s)
-    size = s;
-    points = {{pos[1]+size, pos[2]-size, pos[3]-size, 1,0},
+  Lua(<
+    function cube(pos, s)
+      size = s;
+      points = {{pos[1]+size, pos[2]-size, pos[3]-size, 1,0},
               {pos[1]+size, pos[2]-size, pos[3]+size, 0,0},
               {pos[1]-size, pos[2]-size, pos[3]+size, 1,0},
               {pos[1]-size, pos[2]-size, pos[3]-size, 0,0},
@@ -62,7 +62,7 @@ Lua(<
               {pos[1]+size, pos[2]+size, pos[3]-size, 1,1},
               {pos[1]+size, pos[2]+size, pos[3]+size, 0,1}
             }
-    vertexData = {
+      vertexData = {
         points[1],points[2],points[7], points[2],points[7],points[8],--right
         points[1],points[2],points[3], points[1],points[3],points[4],--bottom
         points[1],points[4],points[5], points[1],points[5],points[7],--front
@@ -73,15 +73,15 @@ Lua(<
       }
 
       return vertexData
-  end
+     end
 
   data = {}
   index = 1
 
   for x=1,3 do
     for y=1,3 do
-      for z=10,12 do
-        if ((x~=2 and (y~=2 or z~=11)) or (y~=2 and z~=11)) then
+      for z=1,3 do
+        if ((x~=2 and (y~=2 or z~=2)) or (y~=2 and z~=2)) then
           for k,v in pairs(cube({2*x,2*y,2*z}, 1)) do
             data[index] = v;
             index = index + 1
@@ -95,13 +95,15 @@ Lua(<
   return data
 >)
 
-Texture("red")
+Texture("noise")
   Lua(<
   data = {}
-  for i=1,4 do
+  for i=1,32 do
     row = {}
-    for k=1,4 do
-      pixel = {1,0,0}
+    for k=1,32 do
+      color = math.sin(i*k) + 1
+      color = color / 2
+      pixel = {math.sin(i*k/5)*0.5+0.5,math.cos(i*k/5)*0.5+0.5,math.sin(k)*0.5+0.5}
       row[k] = pixel
     end
     data[i] = row
@@ -113,9 +115,9 @@ Texture("red")
 Texture("random")
   Lua(<
   data = {}
-  for i=1,128 do
+  for i=1,16 do
     row = {}
-    for k=1,128 do
+    for k=1,16 do
       pixel = {math.random(),math.random(),math.random()}
       row[k] = pixel
     end
@@ -149,7 +151,10 @@ Mesh("square")
 
 Scene()
 {
-  Bind("random", Mesh("cube"))
+  Bind("random", Transform( Lua(< local args = {...} return args[1]+10, args[2]+15, args[3] - 10, args[4], args[5] >),
+                   Mesh("cube")))
+  Bind("noise", Transform( Lua(< local args = {...} return args[1]-10, args[2] + 10, args[3] - 10, args[4], args[5] >),
+                   Mesh("cube")))
   Bind("checkerboard2", Mesh("bumpycyc"))
   Bind("checkerboard",
         Transform( Lua(< local args = {...} return args[1]+10, args[2], args[3], args[4], args[5] >),
