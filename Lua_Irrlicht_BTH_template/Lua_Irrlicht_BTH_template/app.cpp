@@ -148,7 +148,7 @@ void App::drawOneFrame()
 	m_driver->beginScene(true, true, irr::video::SColor(255, 90, 101, 140));
 
 	m_smgr->drawAll();
-	m_guienv->drawAll();
+	//m_guienv->drawAll();
 
 	m_driver->endScene();
 }

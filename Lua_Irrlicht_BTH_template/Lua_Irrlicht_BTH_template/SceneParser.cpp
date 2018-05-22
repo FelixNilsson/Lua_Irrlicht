@@ -8,10 +8,10 @@
 #define new DEBUG_NEW
 #endif
 
-// FILE:		FUNCTION* | SCENE
+// FILE:		FUNCTION* SCENE
 // FUNCTION:	MESH | LUA | TEXTURE 
 // MESH:		"Mesh(" STRING ")" MBODY
-// MBODY:		"\n{\n" TRIANGLES "}\n"
+// MBODY:		WHITESPACE "{\n" TRIANGLES WHITESPACE "}\n"
 // TRIANGLES:	TRIANGLE* | TRIANGLE5*
 // TRIANGLE:	VECTOR3 ",\n" VECTOR3 ",\n" VECTOR3
 // TRIANGLE5:	VECTOR5 ",\n" VECTOR5 ",\n" VECTOR5
@@ -19,34 +19,26 @@
 // VECTOR5:		"(" NUMBER "," NUMBER "," NUMBER "," NUMBER "," NUMBER")"
 // NUMBER:		"-" [0-9]* | [0-9]*
 // SCENE:		"Scene()" SBODY
-// SBODY:		"\n{\n" SFUNCTIONS* "}"
-// SFUNCTIONS:	SMESH | BIND
-// SMESH:		"Mesh" "(" STRING ")\n"
-// BIND:		"Bind" "(" STRING ", " SMESH ")\n" | "Bind" "(" STRING ", TRANSFORM 
+// SBODY:		WHITESPACE "{" WHITESPACE SFUNCTIONS* WHITESPACE "}"
+// SFUNCTIONS:	WHITESPACE (SMESH | BIND WHITESPACE ")")
+// SMESH:		"Mesh" "(" STRING ")" WHITESPACE
+// BIND:		"Bind" "(" WHITESPACE STRING ","  WHITESPACE (SMESH | TRANSFORM)
 // STRING:		'\"' [a-z]+ '\"'
 // TEXTURE:		"Texture(" STRING ")\n" TBODY
-// TBODY:		"{\n" ROWS "}\n" | WHITESPACE LBODY
+// TBODY:		WHITESPACE "{" WHITESPACE ROWS WHITESPACE "}\n" | WHITESPACE LBODY
 // ROWS:		ROW*
-// ROW:			(VECTOR3 "," VECTOR3)* RSEPERATOR
-// RSEPERATOR:	",\n" (ROW | EMPTY) | "\n"
+// ROW:			WHITESPACE VECTOR3*
 // LUA:			"Mesh(" STRING ")\n" LBODY "\n"
 // LBODY:		"Lua(<\n" CODE ">)"
 // CODE:		[^">)"]*
-// TRANSFORM:	WHITESPACE "Transform(" WHITESPACE LBODY "," WHITESPACE SMESH "))" WHITESPACE
+// TRANSFORM:	WHITESPACE "Transform(" WHITESPACE LBODY "," WHITESPACE SMESH WHITESPACE ")"
 // WHITESPACE:	['\t'' ''\n']*
 
-
-// TSEPERATOR:	",\n" TRIANGLE | "\n" UNUSED
 
 SceneParser::SceneParser(char* input) : m_input(input), digit("0123456789"), hex("0123456789abcdefABCDEF"), nonzero("123456789"), dot("."),
 letters("QWERTYUIOPASDFGHJKLMNBVCXZqwertyuiopasdfghjklzxcvbnm"), sDigit(&digit), number({ &nonzero, &sDigit }), zero("0"), x("x"), sHex(&hex),
 hexnumber({ &zero, &x, &hex, &sHex }), sLetters(&letters), word({ &letters, &sLetters, &sDigit }) {
-	if (FILE(&m_root)) {
-		//m_root->dump();
-		std::cout << "Succes with parsing" << std::endl;
-	}
-	else
-		std::cout << "Wrong with parsing" << std::endl;
+	FILE(&m_root);
 }
 
 
@@ -60,7 +52,6 @@ void SceneParser::buildScene(lua_State* L) {
 
 
 	Tree* tree = m_root->m_children.back();
-	//tree = tree->m_children.back();
 
 	if (tree->m_tag != "SCENE") {
 		std::cout << "no scene function" << std::endl;
@@ -78,19 +69,15 @@ void SceneParser::buildScene(lua_State* L) {
 			buildMesh(L, p->m_children.front()->m_lexeme);
 		}
 		else if (p->m_tag == "Bind") {
-			//std::list<Tree*>::iterator it = p->m_children.end();
-			//it--;
 			name = p->m_children.front()->m_lexeme;
 			buildMesh(L, name);
 			lua_getglobal(L, "bind");
 			lua_pushstring(L, name.c_str());
-			//it--;
+			
 			lua_pushstring(L, p->m_children.back()->m_lexeme.c_str());
 			lua_pcall(L, 2, 0, 0);
 		}
 		else if (p->m_tag == "Transform") {
-			std::cout << "transform" << std::endl;
-
 			std::list<Tree*>::iterator it = p->m_children.begin();
 			it++;
 			name = (*it)->m_lexeme;
@@ -98,15 +85,10 @@ void SceneParser::buildScene(lua_State* L) {
 
 			lua_getglobal(L, "bind");
 			lua_pushstring(L, name.c_str());
-			//it--;
+			
 			lua_pushstring(L, p->m_children.back()->m_lexeme.c_str());
 			lua_pcall(L, 2, 0, 0);
 		}
-		else
-			std::cout << "nay" << std::endl;
-
-
-		//std::cout << p->m_lexeme << std::endl;
 	}
 }
 
@@ -254,7 +236,7 @@ void SceneParser::addTexture(lua_State* L, Tree* tree) {
 	lua_pcall(L, 2, 0, 0);
 }
 
-bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* | SCENE
+bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* SCENE
 	Tree* child = nullptr;
 	std::list<Tree*> list;
 	char* start = m_input;
@@ -272,6 +254,10 @@ bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* | SCENE
 	}
 	if (*m_input != '\0') {
 		std::cout << "Warning bad file format" << std::endl;
+
+		for (auto l : list)
+			delete l;
+
 		return false;
 	}
 
@@ -289,7 +275,7 @@ bool SceneParser::FUNCTION(Tree** tree) {// FUNCTION: MESH | LUA | TEXTURE
 	return false;
 }
 
-bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
+bool SceneParser::MESH(Tree** tree) {// MESH: "Mesh(" STRING ")" MBODY
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	char* start = m_input;
@@ -308,7 +294,7 @@ bool SceneParser::MESH(Tree** tree) {// MESH:	"Mesh(" STRING ")" MBODY
 	return false;
 }
 
-bool SceneParser::TEXTURE(Tree** tree) {// TEXTURE:	"Texture(" STRING ")\n" TBODY
+bool SceneParser::TEXTURE(Tree** tree) {// TEXTURE: "Texture(" STRING ")\n" TBODY
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	
@@ -327,7 +313,7 @@ bool SceneParser::TEXTURE(Tree** tree) {// TEXTURE:	"Texture(" STRING ")\n" TBOD
 	return false;
 }
 
-bool SceneParser::TBODY(Tree** tree) {// TBODY:	WHITESPACE "{\n" ROWS WHITESPACE "}\n" | WHITESPACE LBODY
+bool SceneParser::TBODY(Tree** tree) {// TBODY:	WHITESPACE "{" WHITESPACE ROWS WHITESPACE "}\n" | WHITESPACE LBODY
 	Tree* child = nullptr;
 	char* start = m_input;
 
@@ -371,7 +357,7 @@ bool SceneParser::ROWS(Tree** tree) {// ROWS: ROW*
 	return true;
 }
 
-bool SceneParser::ROW(Tree** tree) {
+bool SceneParser::ROW(Tree** tree) {// ROW: WHITESPACE VECTOR3*
 	Tree* child = nullptr;
 	std::list<Tree*> list;
 	char* start = m_input;
@@ -394,7 +380,7 @@ bool SceneParser::ROW(Tree** tree) {
 	return true;
 }
 
-bool SceneParser::LUA(Tree** tree) {// LUA:	"Mesh(" STRING ")\n" LBODY
+bool SceneParser::LUA(Tree** tree) {// LUA: "Mesh(" STRING ")\n" LBODY "\n"
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	char* start = m_input;
@@ -412,7 +398,7 @@ bool SceneParser::LUA(Tree** tree) {// LUA:	"Mesh(" STRING ")\n" LBODY
 	return false;
 }
 
-bool SceneParser::LBODY(Tree** tree) {// LBODY: "Lua(<\n" CODE ">)\n"
+bool SceneParser::LBODY(Tree** tree) {// LBODY: "Lua(<\n" CODE ">)"
 	Tree* child = nullptr;
 	char* start = m_input;
 
@@ -448,7 +434,7 @@ bool SceneParser::WHITESPACE() {// WHITESPACE:	['\t'' ''\n']*
 	return true;
 }
 
-bool SceneParser::TRANSFORM(Tree** tree) {//WHITESPACE "Transform(" WHITESPACE LBODY "," WHITESPACE SMESH "))" WHITESPACE
+bool SceneParser::TRANSFORM(Tree** tree) {//TRANSFORM: WHITESPACE "Transform(" WHITESPACE LBODY "," WHITESPACE SMESH WHITESPACE ")"
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	char* start = m_input;
@@ -481,7 +467,7 @@ bool SceneParser::SCENE(Tree** tree) {// SCENE:	"Scene()" SBODY
 	return false;
 }
 
-bool SceneParser::MBODY(Tree** tree) {// MBODY:	WHITESPACE "{\n" TRIANGLES "}\n"
+bool SceneParser::MBODY(Tree** tree) {// MBODY:	WHITESPACE "{\n" TRIANGLES WHITESPACE "}\n"
 	Tree* child = nullptr;
 	char* start = m_input;
 
@@ -688,7 +674,7 @@ bool SceneParser::SBODY(Tree** tree) {// SBODY:	WHITESPACE "{" WHITESPACE SFUNCT
 	return false;
 }
 
-bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
+bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: WHITESPACE (SMESH | BIND WHITESPACE ")")
 	Tree *child = nullptr;
 	char* start = m_input;
 	
@@ -699,7 +685,7 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 
 		return true;
 	}
-	else if (BIND(&child) && WHITESPACE() && TERM(")")) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
+	else if (BIND(&child) && WHITESPACE() && TERM(")")) {
 		*tree = child;
 
 		return true;
@@ -708,12 +694,12 @@ bool SceneParser::SFUNCTIONS(Tree** tree) {// SFUNCTIONS: SMESH | BIND
 	return false;
 }
 
-bool SceneParser::BIND(Tree** tree) {//"Bind" "(" STRING ", " SMESH ")\n" | "Bind" "(" STRING ", TRANSFORM 
+bool SceneParser::BIND(Tree** tree) {//BIND: "Bind" "(" WHITESPACE STRING ","  WHITESPACE (SMESH | TRANSFORM)
 	Tree* child1 = nullptr;
 	Tree* child2 = nullptr;
 	char *start = m_input;
 
-	if (TERM("Bind") && TERM("(") && WHITESPACE() && STRING(&child1) && TERM(",") && WHITESPACE()) {// && (SMESH(&child1) || TRANSFORM(&child1)) {//TERM("Mesh", &child4) && TERM("(", &child4) && STRING(&child2) && TERM("))\n", &child4)) {// BIND: "Bind" "(" STRING ", " SMESH ")\n"
+	if (TERM("Bind") && TERM("(") && WHITESPACE() && STRING(&child1) && TERM(",") && WHITESPACE()) {
 		if (SMESH(&child2)) {
 			*tree = new Tree("Bind", start, m_input - start);
 			(*tree)->m_children.push_back(child2);
@@ -721,7 +707,7 @@ bool SceneParser::BIND(Tree** tree) {//"Bind" "(" STRING ", " SMESH ")\n" | "Bin
 
 			return true;
 		}
-		else if (WHITESPACE() && TRANSFORM(&child2)) {
+		else if (TRANSFORM(&child2)) {
 			*tree = child2;
 			(*tree)->m_children.push_back(child1);
 
@@ -735,11 +721,11 @@ bool SceneParser::BIND(Tree** tree) {//"Bind" "(" STRING ", " SMESH ")\n" | "Bin
 	return false;
 }
 
-bool SceneParser::SMESH(Tree** tree = nullptr) {
+bool SceneParser::SMESH(Tree** tree = nullptr) {// SMESH: "Mesh" "(" STRING ")" WHITESPACE
 	Tree *child = nullptr;
 	char* start = m_input;
 
-	if (TERM("Mesh") && TERM("(") && STRING(&child) && TERM(")") && WHITESPACE()) {// SMESH: "Mesh" "(" STRING ")\n"
+	if (TERM("Mesh") && TERM("(") && STRING(&child) && TERM(")") && WHITESPACE()) {
 		*tree = child;
 
 		return true;
