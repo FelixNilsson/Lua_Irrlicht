@@ -236,10 +236,12 @@ App::App()
 	lua_pushcfunction(this->L, loadScene);
 	lua_setglobal(this->L, "loadScene");
 
-	setupScript();
 	
 	m_smgr->getActiveCamera()->setPosition(irr::core::vector3df(0, 0, 15));
 	m_smgr->getActiveCamera()->setTarget(irr::core::vector3df(0, 0, 0));
+	
+	
+	setupScript();
 }
 
 App::~App()
@@ -327,7 +329,6 @@ int App::addMesh(lua_State * L)
 		std::cout << "error in triangle list" << std::endl;
 	}
 	else {
-		m_id++;
 		auto size = list.size();
 		if (!vec3) {
 			size = listUV.size();
@@ -353,6 +354,8 @@ int App::addMesh(lua_State * L)
 		auto p = m_smgr->addMeshSceneNode(mesh);
 		p->setMaterialFlag(irr::video::EMF_BACK_FACE_CULLING, false);
 		p->setName(irr::core::string<char*>(name.c_str()));
+		p->setID(m_id);
+		m_id++;
 	}
 
 	return 0;
@@ -438,6 +441,8 @@ int App::camera(lua_State * L)
 			m_smgr->getActiveCamera()->setTarget(target);
 		}
 	}
+	drawOneFrame();
+
 	return 0;
 }
 

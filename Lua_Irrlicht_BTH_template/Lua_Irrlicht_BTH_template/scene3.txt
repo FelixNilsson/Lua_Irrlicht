@@ -1,6 +1,6 @@
 Mesh("bumpycyc")
-Lua(<
--- Build a planar height map
+  Lua(<
+    -- Build a planar height map
     radius = 5
     bumps = {}
     for row=0,9 do
@@ -47,83 +47,8 @@ Lua(<
       end
     end
     return triVerts
->)
-
-Mesh("cube")
-Lua(<
-  function cube(pos, s)
-    size = s;
-    points = {{pos[1]+size, pos[2]-size, pos[3]-size, 1,0},
-              {pos[1]+size, pos[2]-size, pos[3]+size, 0,0},
-              {pos[1]-size, pos[2]-size, pos[3]+size, 1,0},
-              {pos[1]-size, pos[2]-size, pos[3]-size, 0,0},
-              {pos[1]-size, pos[2]+size, pos[3]-size, 0,1},
-              {pos[1]-size, pos[2]+size, pos[3]+size, 1,1},
-              {pos[1]+size, pos[2]+size, pos[3]-size, 1,1},
-              {pos[1]+size, pos[2]+size, pos[3]+size, 0,1}
-            }
-    vertexData = {
-        points[1],points[2],points[7], points[2],points[7],points[8],--right
-        points[1],points[2],points[3], points[1],points[3],points[4],--bottom
-        points[1],points[4],points[5], points[1],points[5],points[7],--front
-        points[1],points[2],points[3], points[1],points[3],points[4],--left
-        points[3],points[4],points[5], points[3],points[5],points[6],--bottom
-        points[3],points[6],points[8], points[2],points[3],points[8],--back
-        points[5],points[6],points[7], points[6],points[7],points[8],--top
-      }
-
-      return vertexData
-  end
-
-  data = {}
-  index = 1
-
-  for x=1,3 do
-    for y=1,3 do
-      for z=10,12 do
-        if ((x~=2 and (y~=2 or z~=11)) or (y~=2 and z~=11)) then
-          for k,v in pairs(cube({2*x,2*y,2*z}, 1)) do
-            data[index] = v;
-            index = index + 1
-          end
-        end
-      end
-    end
-  end
-
-
-  return data
->)
-
-Texture("red")
-  Lua(<
-  data = {}
-  for i=1,4 do
-    row = {}
-    for k=1,4 do
-      pixel = {1,0,0}
-      row[k] = pixel
-    end
-    data[i] = row
-  end
-
-  return data
   >)
 
-Texture("random")
-  Lua(<
-  data = {}
-  for i=1,128 do
-    row = {}
-    for k=1,128 do
-      pixel = {math.random(),math.random(),math.random()}
-      row[k] = pixel
-    end
-    data[i] = row
-  end
-
-  return data
-  >)
 
 Texture("checkerboard")
 {
@@ -149,10 +74,9 @@ Mesh("square")
 
 Scene()
 {
-  Bind("random", Mesh("cube"))
-  Bind("checkerboard2", Mesh("bumpycyc"))
-  Bind("checkerboard",
+  Bind( "checkerboard2", Mesh("bumpycyc") )
+  Bind( "checkerboard",
         Transform( Lua(< local args = {...} return args[1]+10, args[2], args[3], args[4], args[5] >),
-                   Mesh("bumpycyc")))
-  Bind("random", Mesh("square"))
+                   Mesh("bumpycyc") ) )
+  Bind("checkerboard", Mesh("square") )
 }

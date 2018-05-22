@@ -1,11 +1,158 @@
-Mesh("tri")
+Mesh("bumpycyc")
+Lua(<
+-- Build a planar height map
+    radius = 5
+    bumps = {}
+    for row=0,9 do
+      for col=0,9 do
+        bumps[row*10+col] = math.random()
+      end
+    end
+
+    -- Wrap the heightmap into a cylinder
+    -- Transform from sparse 2d map into dense rows of verts
+    cycRows = {}
+    for row=0,9 do
+      vrow = {}
+      for col=0,9 do
+        alpha = 2*math.pi * col / 10
+        x = math.cos(alpha) * (radius-0.5 + bumps[row*10+col])
+        z = math.sin(alpha) * (radius-0.5 + bumps[row*10+col])
+        vrow[col] = {x,row*2,z}   -- Force from-0 for modulo below
+      end
+      table.insert(cycRows, vrow)
+    end
+
+    function tconcat(t1, t2)
+      res = {}
+      for i=1,#t1 do res[i] = t1[i] end
+      for i=1,#t2 do res[i+#t1] = t2[i] end
+      return res
+    end
+
+    -- Pull out triangles from the vertex lists. Put the texture in each
+    -- "square" formed by adjacent triangles. This will probably cause
+    -- visibles seams as this is just a simple demo.
+    triVerts = {}
+    for row=1,9 do
+      rowBot, rowTop = cycRows[row], cycRows[row+1]
+      for col=0,9 do
+        bl, br, tl, tr = rowBot[col], rowBot[(col+1)%10], rowTop[col], rowTop[(col+1)%10]
+        table.insert(triVerts,  tconcat(bl, {0,0}) )
+        table.insert(triVerts,  tconcat(br, {1,0}) )
+        table.insert(triVerts,  tconcat(tl, {0,1}) )
+        table.insert(triVerts,  tconcat(tr, {1,1}) )
+        table.insert(triVerts,  tconcat(tl, {0,1}) )
+        table.insert(triVerts,  tconcat(br, {1,0}) )
+      end
+    end
+    return triVerts
+>)
+
+Mesh("cube")
+Lua(<
+  function cube(pos, s)
+    size = s;
+    points = {{pos[1]+size, pos[2]-size, pos[3]-size, 1,0},
+              {pos[1]+size, pos[2]-size, pos[3]+size, 0,0},
+              {pos[1]-size, pos[2]-size, pos[3]+size, 1,0},
+              {pos[1]-size, pos[2]-size, pos[3]-size, 0,0},
+              {pos[1]-size, pos[2]+size, pos[3]-size, 0,1},
+              {pos[1]-size, pos[2]+size, pos[3]+size, 1,1},
+              {pos[1]+size, pos[2]+size, pos[3]-size, 1,1},
+              {pos[1]+size, pos[2]+size, pos[3]+size, 0,1}
+            }
+    vertexData = {
+        points[1],points[2],points[7], points[2],points[7],points[8],--right
+        points[1],points[2],points[3], points[1],points[3],points[4],--bottom
+        points[1],points[4],points[5], points[1],points[5],points[7],--front
+        points[1],points[2],points[3], points[1],points[3],points[4],--left
+        points[3],points[4],points[5], points[3],points[5],points[6],--bottom
+        points[3],points[6],points[8], points[2],points[3],points[8],--back
+        points[5],points[6],points[7], points[6],points[7],points[8],--top
+      }
+
+      return vertexData
+  end
+
+  data = {}
+  index = 1
+
+  for x=1,3 do
+    for y=1,3 do
+      for z=10,12 do
+        if ((x~=2 and (y~=2 or z~=11)) or (y~=2 and z~=11)) then
+          for k,v in pairs(cube({2*x,2*y,2*z}, 1)) do
+            data[index] = v;
+            index = index + 1
+          end
+        end
+      end
+    end
+  end
+
+
+  return data
+>)
+
+Texture("red")
+  Lua(<
+  data = {}
+  for i=1,4 do
+    row = {}
+    for k=1,4 do
+      pixel = {1,0,0}
+      row[k] = pixel
+    end
+    data[i] = row
+  end
+
+  return data
+  >)
+
+Texture("random")
+  Lua(<
+  data = {}
+  for i=1,128 do
+    row = {}
+    for k=1,128 do
+      pixel = {math.random(),math.random(),math.random()}
+      row[k] = pixel
+    end
+    data[i] = row
+  end
+
+  return data
+  >)
+
+Texture("checkerboard")
 {
-(-1,2,-3),
-(4,-5,6),
-(-7,8,9)
+  (0,0,0), (1,1,1), (0,0,0), (1,1,1),
+  (1,1,1), (0,0,0), (1,1,1), (0,0,0),
+  (0,0,0), (1,1,1), (0,0,0), (1,1,1),
+  (1,1,1), (0,0,0), (1,1,1), (0,0,0)
 }
+
+Texture("checkerboard2")
+{
+  (0,0,0), (1,1,0), (0,0,0), (1,1,0),
+  (1,1,0), (0,0,0), (1,1,0), (0,0,0),
+  (0,0,0), (1,1,0), (0,0,0), (1,1,0),
+  (1,1,0), (0,0,0), (1,1,0), (0,0,0)
+}
+
+Mesh("square")
+{
+  (-20,0,-20,0,0), (20,0,-20,1,0), (-20,0,20,0,1),
+  (20,0,-20,1,0), (20,0,20,1,1), (-20,0,20,0,1)
+}
+
 Scene()
 {
-Mesh("tri")
-Mesh("aj")
+  Bind("random", Mesh("cube"))
+  Bind("checkerboard2", Mesh("bumpycyc"))
+  Bind("checkerboard",
+        Transform( Lua(< local args = {...} return args[1]+10, args[2], args[3], args[4], args[5] >),
+                   Mesh("bumpycyc")))
+  Bind("random", Mesh("square"))
 }
