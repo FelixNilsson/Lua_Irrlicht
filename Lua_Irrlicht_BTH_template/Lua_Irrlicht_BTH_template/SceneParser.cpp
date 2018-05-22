@@ -18,7 +18,7 @@
 // BIND:		"Bind" "(" STRING ", " SMESH ")\n" | "Bind" "(" STRING ", TRANSFORM 
 // STRING:		'\"' [a-z]+ '\"'
 // TEXTURE:		"Texture(" STRING ")\n" TBODY
-// TBODY:		"{\n" ROWS "}\n"
+// TBODY:		"{\n" ROWS "}\n" | WHITESPACE LBODY
 // ROWS:		ROW*
 // ROW:			(VECTOR3 "," VECTOR3)* RSEPERATOR
 // RSEPERATOR:	",\n" (ROW | EMPTY) | "\n"
@@ -124,7 +124,7 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 
 	//tree = tree->m_children.front();
 	if (code) {
-		lua_getglobal(L, "addMesh");//1
+		lua_getglobal(L, "addMesh");
 		
 		if (luaL_loadstring(L, "local args = {...} tri = {} for k, v in pairs(args[1]) do tri[k] = {args[2](v[1],v[2],v[3],v[4],v[5])} end return tri")) {//2
 			std::cout << lua_tostring(L, -1) << '\n';
@@ -132,12 +132,12 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 		}
 		
 		// create mesh
-		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {//3
+		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
 		}
 		if (p) {
-			if (luaL_loadstring(L, p)) {//2
+			if (luaL_loadstring(L, p)) {
 				std::cout << lua_tostring(L, -1) << '\n';
 				lua_pop(L, 1);
 			}
@@ -146,7 +146,7 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 			//arg = std::string("mesh");
 		}
 		else {
-			if (luaL_loadstring(L, "local args = {...} return args[1], args[2], args[3], args[4], args[5]")) {//2
+			if (luaL_loadstring(L, "local args = {...} return args[1], args[2], args[3], args[4], args[5]")) {
 				std::cout << lua_tostring(L, -1) << '\n';
 				lua_pop(L, 1);
 			}
@@ -200,7 +200,26 @@ void SceneParser::buildTexture(lua_State* L) {
 
 void SceneParser::addTexture(lua_State* L, Tree* tree) {
 	std::string name = tree->m_children.front()->m_lexeme;
-	tree = tree->m_children.back(); //rows
+	tree = tree->m_children.back(); //rows or code
+
+	if (tree->m_tag == "CODE") {
+		lua_getglobal(L, "addTexture");
+
+		// create texture
+		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {//3
+			std::cout << lua_tostring(L, -1) << '\n';
+			lua_pop(L, 1);
+		}
+
+		lua_pushstring(L, name.c_str());
+
+		if (lua_pcall(L, 2, 0, 0)) {
+			std::cout << lua_tostring(L, -1) << '\n';
+			lua_pop(L, 1);
+		}
+
+		return;
+	}
 	
 
 	lua_getglobal(L, "addTexture");
@@ -300,11 +319,16 @@ bool SceneParser::TEXTURE(Tree** tree) {// TEXTURE:	"Texture(" STRING ")\n" TBOD
 	return false;
 }
 
-bool SceneParser::TBODY(Tree** tree) {// TBODY:	"{\n" ROWS "}\n"
+bool SceneParser::TBODY(Tree** tree) {// TBODY:	"{\n" ROWS "}\n" | WHITESPACE LBODY
 	Tree* child = nullptr;
 	char* start = m_input;
 
 	if (TERM("{") && WHITESPACE() && ROWS(&child) && TERM("}\n")) {
+		*tree = child;
+
+		return true;
+	}
+	else if (WHITESPACE() && LBODY(&child)) {
 		*tree = child;
 
 		return true;
