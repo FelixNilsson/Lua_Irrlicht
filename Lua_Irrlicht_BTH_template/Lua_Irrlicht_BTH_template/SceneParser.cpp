@@ -250,8 +250,7 @@ bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* SCENE
 
 		return false;
 	}
-
-	if (list.size() > 0) {
+	else {
 		*tree = new Tree("FILE", start, m_input - start);
 		(*tree)->m_children = list;
 	}
