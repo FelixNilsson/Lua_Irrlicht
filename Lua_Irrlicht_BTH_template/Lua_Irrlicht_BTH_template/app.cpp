@@ -555,6 +555,7 @@ int App::loadScene(lua_State* L) {
 	}
 
 	std::string filename = lua_tostring(L, -1);
+	lua_pop(L, 1);
 	std::ifstream t(filename);
 	if (!t.is_open()) {
 		std::cout << "couldn't open file" << std::endl;
@@ -580,6 +581,7 @@ lua_State * App::getLuaState()
 void App::setupScript() {
 	if (luaL_dofile(L, "setup.lua")) {
 		std::cout << "Couldn't load script" << std::endl;
-		return;
+		std::cout << lua_tostring(L, -1) << '\n';
+		lua_pop(L, 1);
 	}
 }

@@ -109,18 +109,25 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 		
 		if (luaL_loadstring(L, "local args = {...} tri = {} for k, v in pairs(args[1]) do tri[k] = {args[2](v[1],v[2],v[3],v[4],v[5])} end return tri")) {//2
 			std::cout << lua_tostring(L, -1) << '\n';
-			lua_pop(L, 1);
+			lua_pop(L, 2);
+
+			return;
 		}
 		
 		// create mesh
 		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
-			lua_pop(L, 1);
+			lua_pop(L, 3);
+
+			return;
 		}
+
 		if (p) {
 			if (luaL_loadstring(L, p)) {
 				std::cout << lua_tostring(L, -1) << '\n';
-				lua_pop(L, 1);
+				lua_pop(L, 4);
+
+				return;
 			}
 			arg += std::string(std::to_string(m_counter));
 			m_counter++;
@@ -128,7 +135,9 @@ void SceneParser::buildMesh(lua_State* L, std::string& arg, const char *p) {
 		else {
 			if (luaL_loadstring(L, "local args = {...} return args[1], args[2], args[3], args[4], args[5]")) {
 				std::cout << lua_tostring(L, -1) << '\n';
-				lua_pop(L, 1);
+				lua_pop(L, 4);
+
+				return;
 			}
 		}
 		if (lua_pcall(L, 2, 1, 0)) {
@@ -183,11 +192,12 @@ void SceneParser::addTexture(lua_State* L, Tree* tree) {
 		// create texture
 		if (luaL_loadstring(L, tree->m_lexeme.c_str()) || lua_pcall(L, 0, 1, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
-			lua_pop(L, 1);
+			lua_pop(L, 2);
+
+			return;
 		}
 
 		lua_pushstring(L, name.c_str());
-
 		if (lua_pcall(L, 2, 0, 0)) {
 			std::cout << lua_tostring(L, -1) << '\n';
 			lua_pop(L, 1);
