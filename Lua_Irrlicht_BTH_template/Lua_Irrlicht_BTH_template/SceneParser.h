@@ -55,17 +55,8 @@ private:
 	bool SMESH(Tree** tree);
 
 	bool TERM(const char *lit);
-	//bool NUM(Tree** = nullptr);
-	//bool TABLE2(Tree** = nullptr);
-	//bool LIST(Tree** = nullptr);
 	bool WORD(Tree** = nullptr);
 	bool STRING(Tree** = nullptr);
-	bool DEC(Tree** = nullptr);
-	//bool HEX(Tree** = nullptr);
-	//bool KEY(Tree** = nullptr);
-	//bool VALUE(Tree** = nullptr);
-	//bool FIELDSEP(Tree **result = nullptr);
-	//bool TABLE(Tree** tree = nullptr);
 public:
 	SceneParser(char*);
 	~SceneParser();

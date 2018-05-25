@@ -242,11 +242,6 @@ bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* SCENE
 	if (SCENE(&child)) {
 		list.push_back(child);
 	}
-
-	if (list.size() > 0) {
-		*tree = new Tree("FILE", start, m_input - start);
-		(*tree)->m_children = list;
-	}
 	if (*m_input != '\0') {
 		std::cout << "Warning bad file format" << std::endl;
 
@@ -254,6 +249,11 @@ bool SceneParser::FILE(Tree** tree) {// FILE: FUNCTION* SCENE
 			delete l;
 
 		return false;
+	}
+
+	if (list.size() > 0) {
+		*tree = new Tree("FILE", start, m_input - start);
+		(*tree)->m_children = list;
 	}
 
 	return true;

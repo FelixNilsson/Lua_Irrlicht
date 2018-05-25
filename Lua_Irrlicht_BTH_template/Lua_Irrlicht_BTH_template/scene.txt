@@ -143,6 +143,14 @@ Texture("checkerboard2")
   (1,1,0), (0,0,0), (1,1,0), (0,0,0)
 }
 
+Texture("red")
+{
+  (1,0,0), (1,0,0), (1,0,0), (1,0,0),
+  (1,0,0), (1,0,0), (1,0,0), (1,0,0),
+  (1,0,0), (1,0,0), (1,0,0), (1,0,0),
+  (1,0,0), (1,0,0), (1,0,0), (1,0,0)
+}
+
 Mesh("square")
 {
   (-20,0,-20,0,0), (20,0,-20,1,0), (-20,0,20,0,1),
@@ -159,5 +167,5 @@ Scene()
   Bind("checkerboard",
         Transform( Lua(< local args = {...} return args[1]+10, args[2], args[3], args[4], args[5] >),
                    Mesh("bumpycyc")))
-  Bind("random", Mesh("square"))
+  Bind("red", Mesh("square"))
 }
